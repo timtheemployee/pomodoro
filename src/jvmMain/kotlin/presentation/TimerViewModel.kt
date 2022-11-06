@@ -1,21 +1,19 @@
 package presentation
 
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.suspendCoroutine
 
 class TimerViewModel {
 
     private val scope = CoroutineScope(Dispatchers.IO)
-    private var seconds = ROUND_TIME
+    private var milliseconds = ROUND_TIME
     private var rounds = 0
     private var goals = 0
     private var isPaused = true
@@ -25,6 +23,8 @@ class TimerViewModel {
     val timer: StateFlow<String> = _timer
 
     fun onSkipClicked() {
+        milliseconds = ROUND_TIME
+        _timer.value = getFormattedTime()
         isPaused = true
         countDownJob?.cancel()
     }
@@ -45,9 +45,17 @@ class TimerViewModel {
 
     private suspend fun tick() {
         delay(ONE_SECOND)
-        seconds -= ONE_SECOND
-        _timer.value = "Seconds $seconds"
+        milliseconds -= ONE_SECOND
+        _timer.value = getFormattedTime()
     }
+
+    private fun getFormattedTime(): String =
+        String.format(
+            "%02d:%02d",
+            TimeUnit.MILLISECONDS.toMinutes(milliseconds),
+            TimeUnit.MILLISECONDS.toSeconds(milliseconds) -
+                    TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(milliseconds))
+        )
 
     private companion object {
         const val ROUND_TIME = 900000L
