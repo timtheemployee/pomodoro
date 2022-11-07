@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,13 +15,15 @@ class TimerViewModel {
 
     private val scope = CoroutineScope(Dispatchers.IO)
     private var milliseconds = ROUND_TIME
-    private var rounds = 0
-    private var goals = 0
     private var isPaused = true
     private var countDownJob: Job? = null
 
     private val _timer = MutableStateFlow("")
     val timer: StateFlow<String> = _timer
+
+    init {
+        _timer.value = getFormattedTime()
+    }
 
     fun onSkipClicked() {
         milliseconds = ROUND_TIME
@@ -56,6 +59,10 @@ class TimerViewModel {
             TimeUnit.MILLISECONDS.toSeconds(milliseconds) -
                     TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(milliseconds))
         )
+
+    fun onCloseClicked() {
+        scope.cancel()
+    }
 
     private companion object {
         const val ROUND_TIME = 900000L
