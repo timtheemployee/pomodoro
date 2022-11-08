@@ -21,6 +21,9 @@ class TimerViewModel {
     private val _timer = MutableStateFlow("")
     val timer: StateFlow<String> = _timer
 
+    private val _isPausedIcon = MutableStateFlow(false)
+    val isPausedIcon: StateFlow<Boolean> = _isPausedIcon
+
     init {
         _timer.value = getFormattedTime()
     }
@@ -29,10 +32,12 @@ class TimerViewModel {
         milliseconds = ROUND_TIME
         _timer.value = getFormattedTime()
         isPaused = true
+        _isPausedIcon.value = !isPaused
         countDownJob?.cancel()
     }
 
     fun onActionClicked() {
+        _isPausedIcon.value = isPaused
         if (isPaused) {
             isPaused = false
             countDownJob = scope.launch {
