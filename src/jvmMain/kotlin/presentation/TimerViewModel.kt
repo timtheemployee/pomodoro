@@ -15,6 +15,7 @@ class TimerViewModel {
 
     private val scope = CoroutineScope(Dispatchers.IO)
     private var milliseconds = ROUND_TIME
+    private var fiveSecondsAccumulator = 0L
     private var isPaused = true
     private var countDownJob: Job? = null
 
@@ -23,6 +24,9 @@ class TimerViewModel {
 
     private val _isPausedIcon = MutableStateFlow(false)
     val isPausedIcon: StateFlow<Boolean> = _isPausedIcon
+
+    private val _tickIndex = MutableStateFlow(0)
+    val tickIndex: StateFlow<Int> = _tickIndex
 
     init {
         _timer.value = getFormattedTime()
@@ -53,8 +57,25 @@ class TimerViewModel {
 
     private suspend fun tick() {
         delay(ONE_SECOND)
+        fiveSecondsAccumulator += ONE_SECOND
         milliseconds -= ONE_SECOND
         _timer.value = getFormattedTime()
+        fiveSecondsTick()
+    }
+
+    private fun fiveSecondsTick() {
+        if (fiveSecondsAccumulator == ONE_SECOND * 5) {
+            val firstIndex = _tickIndex.value
+
+            _tickIndex.value = when (firstIndex) {
+                0 -> 2
+                2 -> 1
+                1 -> 0
+                else -> throw IllegalStateException("Unsupported index $firstIndex")
+            }
+
+            fiveSecondsAccumulator = 0L
+        }
     }
 
     private fun getFormattedTime(): String =
@@ -72,5 +93,6 @@ class TimerViewModel {
     private companion object {
         const val ROUND_TIME = 900000L
         const val ONE_SECOND = 1000L
+        const val BARS_COUNT = 12
     }
 }

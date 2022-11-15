@@ -10,13 +10,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
 import androidx.compose.material.Card
-import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
@@ -24,22 +23,19 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.center
 import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
@@ -48,13 +44,14 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
 import presentation.TimerViewModel
-import kotlin.math.roundToInt
+import kotlin.math.abs
 
 fun main() = application {
 
     val timerViewModel = TimerViewModel()
     val timer = timerViewModel.timer.collectAsState()
     val isPaused = timerViewModel.isPausedIcon.collectAsState()
+    val tickIndex = timerViewModel.tickIndex.collectAsState()
 
     Window(
         undecorated = true,
@@ -84,12 +81,8 @@ fun main() = application {
                             style = MaterialTheme.typography.h2,
                             color = AppColors.textColor
                         )
-                        Text(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            text = "Timer layout",
-                            color = AppColors.textColor
-                        )
-                        Spacer(modifier = Modifier.padding(vertical = 32.dp))
+                        tickView(tickIndex = tickIndex.value)
+                        Spacer(modifier = Modifier.padding(vertical = 24.dp))
                         actionButton(
                             outlineColor = AppColors.textColor,
                             fillColor = AppColors.red,
@@ -104,6 +97,26 @@ fun main() = application {
 }
 
 @Composable
+private fun tickView(modifier: Modifier = Modifier, tickIndex: Int) {
+    Row(verticalAlignment = Alignment.Bottom, content = {
+        Spacer(modifier = modifier.height(48.dp).width(12.dp))
+        repeat(12) { index ->
+            val highBar = ((index - tickIndex).takeIf { it >= 0 } ?: tickIndex) % 3 == 0
+
+            Spacer(
+                modifier = modifier.drawWithCache {
+                    onDrawBehind { drawRoundRect(AppColors.textColor, cornerRadius = CornerRadius(10.dp.toPx())) }
+                }
+                    .height(if (highBar) 48.dp else 32.dp)
+                    .width(6.dp)
+            )
+            Spacer(modifier = modifier.height(48.dp).width(12.dp))
+        }
+    }
+    )
+}
+
+@Composable
 private fun actionButton(outlineColor: Color, fillColor: Color, isPaused: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
@@ -112,23 +125,25 @@ private fun actionButton(outlineColor: Color, fillColor: Color, isPaused: Boolea
                 onClick = onClick,
             ),
         content = {
-            Canvas(modifier = Modifier.size(128.dp), onDraw = {
-                val canvasRect = size.toRect()
-                val width = canvasRect.width
-                val height = canvasRect.height
+            Canvas(
+                modifier = Modifier.size(128.dp),
+                onDraw = {
+                    val canvasRect = size.toRect()
+                    val width = canvasRect.width
+                    val height = canvasRect.height
 
-                drawCircle(
-                    color = outlineColor,
-                    center = Offset(x = width / 2, y = height / 2),
-                    radius = width / 2
-                )
+                    drawCircle(
+                        color = outlineColor,
+                        center = Offset(x = width / 2, y = height / 2),
+                        radius = width / 2
+                    )
 
-                drawCircle(
-                    color = fillColor,
-                    center = Offset(x = width / 2, y = height / 2),
-                    radius = width / 2.5f
-                )
-            })
+                    drawCircle(
+                        color = fillColor,
+                        center = Offset(x = width / 2, y = height / 2),
+                        radius = width / 2.5f
+                    )
+                })
 
             val icon = if (isPaused) {
                 Icons.Rounded.Pause
@@ -168,9 +183,16 @@ private fun footer() {
                                 Spacer(Modifier.padding(vertical = 8.dp))
                                 Text("2/4", color = AppColors.blue, style = MaterialTheme.typography.h4)
                             })
-                        Divider(
-                            modifier = Modifier.width(2.dp).fillMaxHeight(0.3f).padding(vertical = 8.dp),
-                            color = AppColors.blue,
+                        Spacer(
+                            modifier = Modifier
+                                .width(2.dp)
+                                .fillMaxHeight(0.5f)
+                                .padding(vertical = 8.dp)
+                                .drawWithCache {
+                                    onDrawBehind {
+                                        drawRoundRect(AppColors.blue, cornerRadius = CornerRadius(10.dp.toPx()))
+                                    }
+                                }
                         )
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
