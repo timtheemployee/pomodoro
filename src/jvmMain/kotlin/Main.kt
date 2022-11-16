@@ -11,12 +11,12 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
-import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
@@ -36,6 +36,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
@@ -43,15 +44,15 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
-import presentation.TimerViewModel
-import kotlin.math.abs
+import timer.domain.Tick
+import timer.presentation.TimerViewModel
 
 fun main() = application {
 
     val timerViewModel = TimerViewModel()
     val timer = timerViewModel.timer.collectAsState()
     val isPaused = timerViewModel.isPausedIcon.collectAsState()
-    val tickIndex = timerViewModel.tickIndex.collectAsState()
+    val tick = timerViewModel.tick.collectAsState()
 
     Window(
         undecorated = true,
@@ -81,7 +82,7 @@ fun main() = application {
                             style = MaterialTheme.typography.h2,
                             color = AppColors.textColor
                         )
-                        tickView(tickIndex = tickIndex.value)
+                        tickView(tick = tick.value)
                         Spacer(modifier = Modifier.padding(vertical = 24.dp))
                         actionButton(
                             outlineColor = AppColors.textColor,
@@ -97,22 +98,49 @@ fun main() = application {
 }
 
 @Composable
-private fun tickView(modifier: Modifier = Modifier, tickIndex: Int) {
+private fun tickView(modifier: Modifier = Modifier, tick: Tick) {
+    var secondsOnScreen = tick.anchorSeconds
     Row(verticalAlignment = Alignment.Bottom, content = {
         Spacer(modifier = modifier.height(48.dp).width(12.dp))
         repeat(12) { index ->
-            val highBar = ((index - tickIndex).takeIf { it >= 0 } ?: tickIndex) % 3 == 0
-
-            Spacer(
-                modifier = modifier.drawWithCache {
-                    onDrawBehind { drawRoundRect(AppColors.textColor, cornerRadius = CornerRadius(10.dp.toPx())) }
-                }
-                    .height(if (highBar) 48.dp else 32.dp)
-                    .width(6.dp)
-            )
-            Spacer(modifier = modifier.height(48.dp).width(12.dp))
+            val isHigh = ((index - tick.index).takeIf { it >= 0 } ?: tick.index) % 3 == 0
+            if (isHigh) {
+                verticalBarWithLabel(modifier, secondsOnScreen.toString())
+                secondsOnScreen += 15
+            } else {
+                verticalBar(modifier, false)
+            }
+            if (!isHigh) {
+                Spacer(modifier = modifier.height(48.dp).width(12.dp))
+            }
         }
-    }
+    })
+}
+
+@Composable
+private fun verticalBarWithLabel(modifier: Modifier = Modifier, label: String) {
+    Box(modifier = modifier, content = {
+        verticalBar(modifier, true)
+        Text(
+            text = label,
+            modifier = modifier.offset(x = -(7.5.dp), y = 50.dp).width(20.dp),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.body2,
+            color = AppColors.textColor
+        )
+    })
+}
+
+@Composable
+private fun verticalBar(modifier: Modifier = Modifier, isHigh: Boolean) {
+    Spacer(
+        modifier = modifier.drawWithCache {
+            onDrawBehind {
+                drawRoundRect(AppColors.textColor, cornerRadius = CornerRadius(10.dp.toPx()))
+            }
+        }
+            .height(if (isHigh) 48.dp else 32.dp)
+            .width(6.dp)
     )
 }
 

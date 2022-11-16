@@ -1,4 +1,4 @@
-package presentation
+package timer.presentation
 
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
@@ -10,12 +10,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import timer.domain.Tick
 
 class TimerViewModel {
 
     private val scope = CoroutineScope(Dispatchers.IO)
     private var milliseconds = ROUND_TIME
     private var fiveSecondsAccumulator = 0L
+    private var fifteenSecondsAccumulator = 0L
     private var isPaused = true
     private var countDownJob: Job? = null
 
@@ -25,8 +27,8 @@ class TimerViewModel {
     private val _isPausedIcon = MutableStateFlow(false)
     val isPausedIcon: StateFlow<Boolean> = _isPausedIcon
 
-    private val _tickIndex = MutableStateFlow(0)
-    val tickIndex: StateFlow<Int> = _tickIndex
+    private val _tick = MutableStateFlow(Tick(index = 0, anchorSeconds = 0))
+    val tick: StateFlow<Tick> = _tick
 
     init {
         _timer.value = getFormattedTime()
@@ -57,25 +59,32 @@ class TimerViewModel {
 
     private suspend fun tick() {
         delay(ONE_SECOND)
-        fiveSecondsAccumulator += ONE_SECOND
         milliseconds -= ONE_SECOND
         _timer.value = getFormattedTime()
-        fiveSecondsTick()
+        updateTick()
     }
 
-    private fun fiveSecondsTick() {
+    private fun updateTick() {
+        fiveSecondsAccumulator += ONE_SECOND
+        var updatedTick = _tick.value
         if (fiveSecondsAccumulator == ONE_SECOND * 5) {
-            val firstIndex = _tickIndex.value
-
-            _tickIndex.value = when (firstIndex) {
-                0 -> 2
-                2 -> 1
-                1 -> 0
-                else -> throw IllegalStateException("Unsupported index $firstIndex")
+            updatedTick = when (updatedTick.index) {
+                0 -> updatedTick.copy(index = 2)
+                2 -> updatedTick.copy(index = 1)
+                1 -> updatedTick.copy(index = 0)
+                else -> throw IllegalStateException("Unsupported index ${updatedTick.index}")
             }
 
+            fifteenSecondsAccumulator += fiveSecondsAccumulator
             fiveSecondsAccumulator = 0L
         }
+
+        if (fifteenSecondsAccumulator == ONE_SECOND * 15) {
+            updatedTick = updatedTick.copy(anchorSeconds = (updatedTick.anchorSeconds + 15) % 60)
+            fifteenSecondsAccumulator = 0L
+        }
+
+        _tick.value = updatedTick
     }
 
     private fun getFormattedTime(): String =
@@ -93,6 +102,5 @@ class TimerViewModel {
     private companion object {
         const val ROUND_TIME = 900000L
         const val ONE_SECOND = 1000L
-        const val BARS_COUNT = 12
     }
 }
