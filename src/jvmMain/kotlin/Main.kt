@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.window.WindowDraggableArea
 import androidx.compose.material.Card
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
@@ -63,37 +64,39 @@ fun main() = application {
             position = WindowPosition.Aligned(Alignment.Center)
         )
     ) {
-        MaterialTheme(
-            content = {
-                Column(
-                    modifier = Modifier.fillMaxSize().background(AppColors.red),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    content = {
-                        toolbar(
-                            onSkip = timerViewModel::onSkipClicked,
-                            onClose = {
-                                timerViewModel.onCloseClicked()
-                                exitApplication()
-                            }
-                        )
-                        Text(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            text = timer.value,
-                            style = MaterialTheme.typography.h2,
-                            color = AppColors.textColor
-                        )
-                        tickView(tick = tick.value)
-                        Spacer(modifier = Modifier.padding(vertical = 24.dp))
-                        actionButton(
-                            outlineColor = AppColors.textColor,
-                            fillColor = AppColors.red,
-                            isPaused = isPaused.value,
-                            onClick = timerViewModel::onActionClicked
-                        )
-                        footer()
-                    })
-            }
-        )
+        WindowDraggableArea {
+            MaterialTheme(
+                content = {
+                    Column(
+                        modifier = Modifier.fillMaxSize().background(AppColors.red),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        content = {
+                            toolbar(
+                                onSkip = timerViewModel::onSkipClicked,
+                                onClose = {
+                                    timerViewModel.onCloseClicked()
+                                    exitApplication()
+                                }
+                            )
+                            Text(
+                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                                text = timer.value,
+                                style = MaterialTheme.typography.h2,
+                                color = AppColors.textColor
+                            )
+                            tickView(tick = tick.value)
+                            Spacer(modifier = Modifier.padding(vertical = 24.dp))
+                            actionButton(
+                                outlineColor = AppColors.textColor,
+                                fillColor = AppColors.red,
+                                isPaused = isPaused.value,
+                                onClick = timerViewModel::onActionClicked
+                            )
+                            footer()
+                        })
+                }
+            )
+        }
     }
 }
 
