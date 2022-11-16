@@ -106,7 +106,7 @@ private fun tickView(modifier: Modifier = Modifier, tick: Tick) {
             val isHigh = ((index - tick.index).takeIf { it >= 0 } ?: tick.index) % 3 == 0
             if (isHigh) {
                 verticalBarWithLabel(modifier, secondsOnScreen.toString())
-                secondsOnScreen += 15
+                secondsOnScreen = (secondsOnScreen + 15) % 60
             } else {
                 verticalBar(modifier, false)
             }

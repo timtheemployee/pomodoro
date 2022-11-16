@@ -17,7 +17,6 @@ class TimerViewModel {
     private val scope = CoroutineScope(Dispatchers.IO)
     private var milliseconds = ROUND_TIME
     private var fiveSecondsAccumulator = 0L
-    private var fifteenSecondsAccumulator = 0L
     private var isPaused = true
     private var countDownJob: Job? = null
 
@@ -39,6 +38,8 @@ class TimerViewModel {
         _timer.value = getFormattedTime()
         isPaused = true
         _isPausedIcon.value = !isPaused
+        fiveSecondsAccumulator = 0L
+        _tick.value = Tick(index = 0, anchorSeconds = 0)
         countDownJob?.cancel()
     }
 
@@ -68,6 +69,11 @@ class TimerViewModel {
         fiveSecondsAccumulator += ONE_SECOND
         var updatedTick = _tick.value
         if (fiveSecondsAccumulator == ONE_SECOND * 5) {
+
+            if (updatedTick.index == 0) {
+                updatedTick = updatedTick.copy(anchorSeconds = (updatedTick.anchorSeconds + 15) % 60)
+            }
+
             updatedTick = when (updatedTick.index) {
                 0 -> updatedTick.copy(index = 2)
                 2 -> updatedTick.copy(index = 1)
@@ -75,15 +81,8 @@ class TimerViewModel {
                 else -> throw IllegalStateException("Unsupported index ${updatedTick.index}")
             }
 
-            fifteenSecondsAccumulator += fiveSecondsAccumulator
             fiveSecondsAccumulator = 0L
         }
-
-        if (fifteenSecondsAccumulator == ONE_SECOND * 15) {
-            updatedTick = updatedTick.copy(anchorSeconds = (updatedTick.anchorSeconds + 15) % 60)
-            fifteenSecondsAccumulator = 0L
-        }
-
         _tick.value = updatedTick
     }
 
