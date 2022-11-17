@@ -1,5 +1,6 @@
 package timer.presentation
 
+import AppColors
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -40,6 +41,7 @@ import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import shared.domain.OverlayColor
 import timer.domain.Tick
 
 @Composable
@@ -51,17 +53,15 @@ fun TimerScreen(
     val timer = viewModel.timer.collectAsState()
     val isPaused = viewModel.isPausedIcon.collectAsState()
     val tick = viewModel.tick.collectAsState()
+    val overlayColor = viewModel.overlayColor.collectAsState()
 
     Column(
-        modifier = modifier.fillMaxSize().background(AppColors.red),
+        modifier = modifier.fillMaxSize().background(overlayColor.value.asAppColor()),
         horizontalAlignment = Alignment.CenterHorizontally,
         content = {
             Toolbar(
                 onSkip = viewModel::onSkipClicked,
-                onClose = {
-                    viewModel.onCloseClicked()
-                    onClose()
-                }
+                onClose = { onClose() }
             )
             Text(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -73,7 +73,7 @@ fun TimerScreen(
             Spacer(modifier = modifier.padding(vertical = 24.dp))
             RoundActionButton(
                 outlineColor = AppColors.textColor,
-                fillColor = AppColors.red,
+                fillColor = overlayColor.value.asAppColor(),
                 isPaused = isPaused.value,
                 onClick = viewModel::onActionClicked
             )
@@ -254,3 +254,9 @@ private fun ColumnScope.Toolbar(
         }
     )
 }
+
+private fun OverlayColor.asAppColor(): Color =
+    when (this) {
+        OverlayColor.ACTIVE -> AppColors.red
+        OverlayColor.REST -> AppColors.blue
+    }

@@ -2,19 +2,22 @@ package timer.presentation
 
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import shared.data.SharedRepository
+import shared.domain.OverlayColor
 import timer.domain.Tick
 
-class TimerViewModel {
+class TimerViewModel(
+    private val scope: CoroutineScope,
+    private val sharedRepository: SharedRepository
+) {
 
-    private val scope = CoroutineScope(Dispatchers.IO)
     private var milliseconds = ROUND_TIME
     private var fiveSecondsAccumulator = 0L
     private var isPaused = true
@@ -29,8 +32,20 @@ class TimerViewModel {
     private val _tick = MutableStateFlow(Tick(index = 0, anchorSeconds = 0))
     val tick: StateFlow<Tick> = _tick
 
+    private val _overlayColor = MutableStateFlow(OverlayColor.ACTIVE)
+    val overlayColor: StateFlow<OverlayColor> = _overlayColor
+
     init {
         _timer.value = getFormattedTime()
+
+        scope.launch {
+            sharedRepository.overlayColor
+                .collect(::obtainOverlayColorChanges)
+        }
+    }
+
+    private fun obtainOverlayColorChanges(overlayColor: OverlayColor) {
+        _overlayColor.value = overlayColor
     }
 
     fun onSkipClicked() {
@@ -44,6 +59,11 @@ class TimerViewModel {
     }
 
     fun onActionClicked() {
+
+        scope.launch {
+            sharedRepository.setOverlayColor(getOppositeOverlayColor())
+        }
+
         _isPausedIcon.value = isPaused
         if (isPaused) {
             isPaused = false
@@ -57,6 +77,12 @@ class TimerViewModel {
             countDownJob?.cancel()
         }
     }
+
+    private fun getOppositeOverlayColor(): OverlayColor =
+        when (_overlayColor.value) {
+            OverlayColor.ACTIVE -> OverlayColor.REST
+            OverlayColor.REST -> OverlayColor.ACTIVE
+        }
 
     private suspend fun tick() {
         delay(ONE_SECOND)
@@ -93,10 +119,6 @@ class TimerViewModel {
             TimeUnit.MILLISECONDS.toSeconds(milliseconds) -
                     TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(milliseconds))
         )
-
-    fun onCloseClicked() {
-        scope.cancel()
-    }
 
     private companion object {
         const val ROUND_TIME = 900000L

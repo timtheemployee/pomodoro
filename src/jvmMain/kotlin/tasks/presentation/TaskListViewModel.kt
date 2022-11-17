@@ -1,10 +1,18 @@
 package tasks.presentation
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
+import shared.data.SharedRepository
+import shared.domain.OverlayColor
 import tasks.domain.Task
 
-class TaskListViewModel {
+class TaskListViewModel(
+    scope: CoroutineScope,
+    private val sharedRepository: SharedRepository
+) {
 
     private val _input = MutableStateFlow("")
     val input: StateFlow<String> = _input
@@ -12,11 +20,19 @@ class TaskListViewModel {
     private val _tasks = MutableStateFlow(emptyList<Task>())
     val tasks: StateFlow<List<Task>> = _tasks
 
+    private val _overlayColor = MutableStateFlow(OverlayColor.ACTIVE)
+    val overlayColor: StateFlow<OverlayColor> = _overlayColor
+
     init {
         _tasks.value = listOf(
             Task(checked = false, "First task"),
             Task(checked = true, "Second task")
         )
+
+        scope.launch {
+            sharedRepository.overlayColor
+                .collect { color -> _overlayColor.value = color }
+        }
     }
 
     fun onTaskCompletionChanged(isChecked: Boolean, task: Task) {

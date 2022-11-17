@@ -11,14 +11,21 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import shared.data.SharedRepository
 import tasks.presentation.TaskListScreen
 import tasks.presentation.TaskListViewModel
 import timer.presentation.TimerScreen
 import timer.presentation.TimerViewModel
 
 fun main() = application {
-    val timerViewModel = TimerViewModel()
-    val taskListViewModel = TaskListViewModel()
+
+    val scope = CoroutineScope(Dispatchers.IO)
+    val sharedRepository = SharedRepository()
+    val timerViewModel = TimerViewModel(scope, sharedRepository)
+    val taskListViewModel = TaskListViewModel(scope, sharedRepository)
 
     Window(
         undecorated = true,
@@ -38,7 +45,10 @@ fun main() = application {
                         TimerScreen(
                             modifier = Modifier.width(320.dp),
                             viewModel = timerViewModel,
-                            onClose = ::exitApplication
+                            onClose = {
+                                scope.cancel()
+                                exitApplication()
+                            }
                         )
                     })
                 }
