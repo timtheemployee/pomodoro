@@ -1,16 +1,20 @@
 package tasks.presentation
 
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import shared.data.SharedRepository
 import shared.domain.OverlayColor
 import tasks.domain.Task
 
 class TaskListViewModel(
-    scope: CoroutineScope,
+    private val scope: CoroutineScope,
     private val sharedRepository: SharedRepository
 ) {
 
@@ -24,25 +28,21 @@ class TaskListViewModel(
     val overlayColor: StateFlow<OverlayColor> = _overlayColor
 
     init {
-        _tasks.value = listOf(
-            Task(checked = false, "First task"),
-            Task(checked = true, "Second task")
-        )
+        sharedRepository.overlayColor
+            .onEach { _overlayColor.value = it }
+            .launchIn(scope)
 
-        scope.launch {
-            sharedRepository.overlayColor
-                .collect { color -> _overlayColor.value = color }
-        }
+        sharedRepository.tasks
+            .onEach { _tasks.value = it }
+            .launchIn(scope)
     }
 
     fun onTaskCompletionChanged(isChecked: Boolean, task: Task) {
-        val storedTasks = _tasks.value.toMutableList()
-        val index = storedTasks.indexOf(task)
-        val storedTask = storedTasks[index]
-        val updatedTask = storedTask.copy(checked = isChecked)
-        storedTasks.removeAt(index)
-        storedTasks.add(index, updatedTask)
-        _tasks.value = storedTasks
+        val newTask = task.copy(checked = isChecked)
+
+        scope.launch {
+            sharedRepository.replaceTask(task, newTask)
+        }
     }
 
     fun onTaskTextChanged(text: String) {
@@ -50,9 +50,10 @@ class TaskListViewModel(
     }
 
     fun onTaskEditingComplete() {
-        val storedTasks = _tasks.value.toMutableList()
-        val newTask = Task(checked = false, description = _input.value)
-        storedTasks.add(newTask)
-        _tasks.value = storedTasks
+        scope.launch {
+            val newTask = Task(checked = false, description = _input.value)
+            sharedRepository.addTask(newTask)
+            _input.value = ""
+        }
     }
 }

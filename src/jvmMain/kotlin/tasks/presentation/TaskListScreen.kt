@@ -25,23 +25,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import shared.domain.OverlayColor
 import tasks.domain.Task
+import androidx.compose.runtime.getValue
 
 @Composable
 fun TaskListScreen(
     modifier: Modifier = Modifier,
     viewModel: TaskListViewModel
 ) {
-    val tasks = viewModel.tasks.collectAsState()
-    val input = viewModel.input.collectAsState()
-    val overlayColor = viewModel.overlayColor.collectAsState()
+    val tasks by viewModel.tasks.collectAsState()
+    val input by viewModel.input.collectAsState()
+    val overlayColor by viewModel.overlayColor.collectAsState()
 
     Box(modifier = modifier.fillMaxSize(),
         content = {
             TaskInputView(
-                overlayColor = overlayColor.value.asAppColor(),
+                overlayColor = overlayColor.asAppColor(),
                 modifier = modifier.align(Alignment.BottomCenter),
                 onTextChanged = viewModel::onTaskTextChanged,
-                value = input.value,
+                value = input,
                 onTrailingIconClicked = viewModel::onTaskEditingComplete
             )
             Column(modifier = modifier
@@ -49,8 +50,8 @@ fun TaskListScreen(
                 .background(AppColors.white),
 
                 content = {
-                    tasks.value.forEach {
-                        TaskView(overlayColor.value.asAppColor(), it, viewModel::onTaskCompletionChanged)
+                    tasks.forEach {
+                        TaskView(overlayColor.asAppColor(), it, viewModel::onTaskCompletionChanged)
                     }
                 }
             )
