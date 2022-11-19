@@ -6,11 +6,13 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import shared.data.SharedRepository
 import shared.domain.OverlayColor
+import tasks.domain.Task
 import timer.domain.Tick
 
 class TimerViewModel(
@@ -35,20 +37,28 @@ class TimerViewModel(
     private val _overlayColor = MutableStateFlow(OverlayColor.ACTIVE)
     val overlayColor: StateFlow<OverlayColor> = _overlayColor
 
+    private val _goals = MutableStateFlow("0/0")
+    val goals: StateFlow<String> = _goals
+
+    private var firstTask: Task? = null
+
     init {
         _timer.value = getFormattedTime()
 
-        scope.launch {
-            sharedRepository.overlayColor
-                .collect(::obtainOverlayColorChanges)
-        }
+        sharedRepository.overlayColor
+            .onEach { _overlayColor.value = it }
+            .launchIn(scope)
+
+        sharedRepository.tasks
+            .onEach { tasks ->
+                val completed = tasks.filter { it.checked }.size
+                _goals.value = "$completed/${tasks.size}"
+                firstTask = tasks.firstOrNull { !it.checked }
+            }
+            .launchIn(scope)
     }
 
-    private fun obtainOverlayColorChanges(overlayColor: OverlayColor) {
-        _overlayColor.value = overlayColor
-    }
-
-    fun onSkipClicked() {
+    fun resetTimer() {
         milliseconds = ROUND_TIME
         _timer.value = getFormattedTime()
         isPaused = true
@@ -58,7 +68,7 @@ class TimerViewModel(
         countDownJob?.cancel()
     }
 
-    fun onActionClicked() {
+    fun switchTimerMode() {
 
         scope.launch {
             sharedRepository.setOverlayColor(getOppositeOverlayColor())
@@ -119,6 +129,16 @@ class TimerViewModel(
             TimeUnit.MILLISECONDS.toSeconds(milliseconds) -
                     TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(milliseconds))
         )
+
+    fun makeFirstTaskCompleted() {
+        firstTask?.let { task ->
+            val updatedTask = task.copy(checked = !task.checked)
+
+            scope.launch {
+                sharedRepository.replaceTask(task, updatedTask)
+            }
+        }
+    }
 
     private companion object {
         const val ROUND_TIME = 900000L

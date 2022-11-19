@@ -1,11 +1,8 @@
 package tasks.presentation
 
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -37,7 +34,7 @@ class TaskListViewModel(
             .launchIn(scope)
     }
 
-    fun onTaskCompletionChanged(isChecked: Boolean, task: Task) {
+    fun toggleTaskCompletion(isChecked: Boolean, task: Task) {
         val newTask = task.copy(checked = isChecked)
 
         scope.launch {
@@ -45,11 +42,11 @@ class TaskListViewModel(
         }
     }
 
-    fun onTaskTextChanged(text: String) {
+    fun updateInputField(text: String) {
         _input.value = text
     }
 
-    fun onTaskEditingComplete() {
+    fun addNewTask() {
         scope.launch {
             val newTask = Task(checked = false, description = _input.value)
             sharedRepository.addTask(newTask)

@@ -36,14 +36,15 @@ fun TaskListScreen(
     val input by viewModel.input.collectAsState()
     val overlayColor by viewModel.overlayColor.collectAsState()
 
-    Box(modifier = modifier.fillMaxSize(),
+    Box(modifier = modifier
+        .fillMaxSize(),
         content = {
             TaskInputView(
                 overlayColor = overlayColor.asAppColor(),
                 modifier = modifier.align(Alignment.BottomCenter),
-                onTextChanged = viewModel::onTaskTextChanged,
+                onTextChanged = viewModel::updateInputField,
                 value = input,
-                onTrailingIconClicked = viewModel::onTaskEditingComplete
+                onTrailingIconClicked = viewModel::addNewTask
             )
             Column(modifier = modifier
                 .verticalScroll(rememberScrollState())
@@ -51,7 +52,7 @@ fun TaskListScreen(
 
                 content = {
                     tasks.forEach {
-                        TaskView(overlayColor.asAppColor(), it, viewModel::onTaskCompletionChanged)
+                        TaskView(overlayColor.asAppColor(), it, viewModel::toggleTaskCompletion)
                     }
                 }
             )

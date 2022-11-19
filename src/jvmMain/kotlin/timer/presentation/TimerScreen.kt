@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import shared.domain.OverlayColor
 import timer.domain.Tick
+import androidx.compose.runtime.getValue
 
 @Composable
 fun TimerScreen(
@@ -50,34 +51,35 @@ fun TimerScreen(
     viewModel: TimerViewModel,
     onClose: () -> Unit
 ) {
-    val timer = viewModel.timer.collectAsState()
-    val isPaused = viewModel.isPausedIcon.collectAsState()
-    val tick = viewModel.tick.collectAsState()
-    val overlayColor = viewModel.overlayColor.collectAsState()
+    val timer by viewModel.timer.collectAsState()
+    val isPaused by viewModel.isPausedIcon.collectAsState()
+    val tick by viewModel.tick.collectAsState()
+    val overlayColor by viewModel.overlayColor.collectAsState()
+    val goals by viewModel.goals.collectAsState()
 
     Column(
-        modifier = modifier.fillMaxSize().background(overlayColor.value.asAppColor()),
+        modifier = modifier.fillMaxSize().background(overlayColor.asAppColor()),
         horizontalAlignment = Alignment.CenterHorizontally,
         content = {
             Toolbar(
-                onSkip = viewModel::onSkipClicked,
+                onSkip = viewModel::resetTimer,
                 onClose = { onClose() }
             )
             Text(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
-                text = timer.value,
+                text = timer,
                 style = MaterialTheme.typography.h2,
                 color = AppColors.textColor
             )
-            TickView(tick = tick.value)
+            TickView(tick = tick)
             Spacer(modifier = modifier.padding(vertical = 24.dp))
             RoundActionButton(
                 outlineColor = AppColors.textColor,
-                fillColor = overlayColor.value.asAppColor(),
-                isPaused = isPaused.value,
-                onClick = viewModel::onActionClicked
+                fillColor = overlayColor.asAppColor(),
+                isPaused = isPaused,
+                onClick = viewModel::switchTimerMode
             )
-            Footer()
+            Footer(goals, viewModel::makeFirstTaskCompleted)
         })
 }
 
@@ -174,7 +176,7 @@ private fun RoundActionButton(outlineColor: Color, fillColor: Color, isPaused: B
 
 
 @Composable
-private fun Footer() {
+private fun Footer(goals: String, onGoalsClicked: () -> Unit) {
     Box(modifier = Modifier.fillMaxSize(), content = {
         Card(
             shape = RoundedCornerShape(topStartPercent = 10, topEndPercent = 10),
@@ -185,7 +187,9 @@ private fun Footer() {
                     verticalAlignment = Alignment.CenterVertically,
                     content = {
                         Column(
-                            horizontalAlignment = Alignment.CenterHorizontally, content = {
+                            modifier = Modifier.clickable { onGoalsClicked() },
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            content = {
                                 Text(
                                     "GOALS",
                                     color = AppColors.blue,
@@ -193,7 +197,7 @@ private fun Footer() {
                                     modifier = Modifier.padding(top = 4.dp)
                                 )
                                 Spacer(Modifier.padding(vertical = 4.dp))
-                                Text("2/4", color = AppColors.blue, style = MaterialTheme.typography.subtitle1)
+                                Text(goals, color = AppColors.blue, style = MaterialTheme.typography.subtitle1)
                             })
                         Spacer(
                             modifier = Modifier
