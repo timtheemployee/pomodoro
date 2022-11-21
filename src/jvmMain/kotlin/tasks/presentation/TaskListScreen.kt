@@ -23,9 +23,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import shared.domain.OverlayColor
+import shared.domain.AppMode
 import tasks.domain.Task
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalWindowInfo
 
 @Composable
 fun TaskListScreen(
@@ -116,8 +117,8 @@ private fun TaskInputTrailingView(tint: Color, onClick: () -> Unit) {
     )
 }
 
-private fun OverlayColor.asAppColor(): Color =
+private fun AppMode.asAppColor(): Color =
     when (this) {
-        OverlayColor.ACTIVE -> AppColors.red
-        OverlayColor.REST -> AppColors.blue
+        AppMode.ACTIVE -> AppColors.red
+        AppMode.REST -> AppColors.blue
     }

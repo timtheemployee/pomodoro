@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import shared.data.SharedRepository
-import shared.domain.OverlayColor
+import shared.domain.AppMode
 import tasks.domain.Task
 import timer.domain.Tick
 
@@ -20,7 +20,7 @@ class TimerViewModel(
     private val sharedRepository: SharedRepository
 ) {
 
-    private var milliseconds = ROUND_TIME
+    private var milliseconds = DEBUG_ROUND_TIME
     private var fiveSecondsAccumulator = 0L
     private var isPaused = true
     private var countDownJob: Job? = null
@@ -34,19 +34,22 @@ class TimerViewModel(
     private val _tick = MutableStateFlow(Tick(index = 0, anchorSeconds = 0))
     val tick: StateFlow<Tick> = _tick
 
-    private val _overlayColor = MutableStateFlow(OverlayColor.ACTIVE)
-    val overlayColor: StateFlow<OverlayColor> = _overlayColor
+    private val _appMode = MutableStateFlow(AppMode.ACTIVE)
+    val appMode: StateFlow<AppMode> = _appMode
 
     private val _goals = MutableStateFlow("0/0")
     val goals: StateFlow<String> = _goals
+
+    private val _rounds = MutableStateFlow(0)
+    val rounds: StateFlow<Int> = _rounds
 
     private var firstTask: Task? = null
 
     init {
         _timer.value = getFormattedTime()
 
-        sharedRepository.overlayColor
-            .onEach { _overlayColor.value = it }
+        sharedRepository.mode
+            .onEach { _appMode.value = it }
             .launchIn(scope)
 
         sharedRepository.tasks
@@ -56,10 +59,12 @@ class TimerViewModel(
                 firstTask = tasks.firstOrNull { !it.checked }
             }
             .launchIn(scope)
+
+        _rounds.value = 0
     }
 
     fun resetTimer() {
-        milliseconds = ROUND_TIME
+        milliseconds = DEBUG_ROUND_TIME
         _timer.value = getFormattedTime()
         isPaused = true
         _isPausedIcon.value = !isPaused
@@ -69,11 +74,6 @@ class TimerViewModel(
     }
 
     fun switchTimerMode() {
-
-        scope.launch {
-            sharedRepository.setOverlayColor(getOppositeOverlayColor())
-        }
-
         _isPausedIcon.value = isPaused
         if (isPaused) {
             isPaused = false
@@ -88,10 +88,10 @@ class TimerViewModel(
         }
     }
 
-    private fun getOppositeOverlayColor(): OverlayColor =
-        when (_overlayColor.value) {
-            OverlayColor.ACTIVE -> OverlayColor.REST
-            OverlayColor.REST -> OverlayColor.ACTIVE
+    private fun getOppositeAppMode(): AppMode =
+        when (_appMode.value) {
+            AppMode.ACTIVE -> AppMode.REST
+            AppMode.REST -> AppMode.ACTIVE
         }
 
     private suspend fun tick() {
@@ -99,7 +99,18 @@ class TimerViewModel(
         milliseconds -= ONE_SECOND
         _timer.value = getFormattedTime()
         updateTick()
+
+        if (milliseconds <= 0) {
+
+            if (_appMode.value == AppMode.ACTIVE) {
+                _rounds.value += 1
+            }
+
+            sharedRepository.setMode(getOppositeAppMode())
+            resetTimer()
+        }
     }
+
 
     private fun updateTick() {
         fiveSecondsAccumulator += ONE_SECOND
@@ -141,6 +152,7 @@ class TimerViewModel(
     }
 
     private companion object {
+        const val DEBUG_ROUND_TIME = 3000L
         const val ROUND_TIME = 900000L
         const val ONE_SECOND = 1000L
     }

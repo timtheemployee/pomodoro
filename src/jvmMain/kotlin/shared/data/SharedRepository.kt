@@ -2,16 +2,17 @@ package shared.data
 
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import shared.domain.OverlayColor
+import shared.domain.AppMode
+import shared.domain.KeyCombo
 import tasks.domain.Task
 
 class SharedRepository {
 
-    private val _overlayColor = MutableSharedFlow<OverlayColor>()
-    val overlayColor = _overlayColor.asSharedFlow()
+    private val _mode = MutableSharedFlow<AppMode>()
+    val mode = _mode.asSharedFlow()
 
-    suspend fun setOverlayColor(color: OverlayColor) {
-        _overlayColor.emit(color)
+    suspend fun setMode(mode: AppMode) {
+        _mode.emit(mode)
     }
 
     private val storedTasks = mutableListOf<Task>()
@@ -30,5 +31,12 @@ class SharedRepository {
         storedTasks.add(task)
 
         _tasks.emit(storedTasks.toList())
+    }
+
+    private val _keyCombo = MutableSharedFlow<KeyCombo>()
+    val keyCombo = _keyCombo.asSharedFlow()
+
+    suspend fun setKeyCombo(combo: KeyCombo) {
+        _keyCombo.emit(combo)
     }
 }

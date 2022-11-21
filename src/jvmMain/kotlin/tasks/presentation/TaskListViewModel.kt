@@ -7,7 +7,8 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import shared.data.SharedRepository
-import shared.domain.OverlayColor
+import shared.domain.AppMode
+import shared.domain.KeyCombo
 import tasks.domain.Task
 
 class TaskListViewModel(
@@ -21,17 +22,36 @@ class TaskListViewModel(
     private val _tasks = MutableStateFlow(emptyList<Task>())
     val tasks: StateFlow<List<Task>> = _tasks
 
-    private val _overlayColor = MutableStateFlow(OverlayColor.ACTIVE)
-    val overlayColor: StateFlow<OverlayColor> = _overlayColor
+    private val _overlayColor = MutableStateFlow(AppMode.ACTIVE)
+    val overlayColor: StateFlow<AppMode> = _overlayColor
 
     init {
-        sharedRepository.overlayColor
+        sharedRepository.mode
             .onEach { _overlayColor.value = it }
             .launchIn(scope)
 
         sharedRepository.tasks
             .onEach { _tasks.value = it }
             .launchIn(scope)
+
+        sharedRepository.keyCombo
+            .onEach(::obtainKeyCombo)
+            .launchIn(scope)
+    }
+
+    private fun obtainKeyCombo(combo: KeyCombo) {
+        when (combo) {
+            KeyCombo.DONE_FIRST -> {
+                val task = _tasks.value.firstOrNull { !it.checked }
+                task?.let { toggleTaskCompletion(true, it) }
+            }
+
+            KeyCombo.ADD_NEW_TASK -> {
+                if (_input.value.isNotEmpty()) {
+                    addNewTask()
+                }
+            }
+        }
     }
 
     fun toggleTaskCompletion(isChecked: Boolean, task: Task) {
@@ -48,9 +68,11 @@ class TaskListViewModel(
 
     fun addNewTask() {
         scope.launch {
-            val newTask = Task(checked = false, description = _input.value)
-            sharedRepository.addTask(newTask)
-            _input.value = ""
+            if (_input.value.isNotEmpty()) {
+                val newTask = Task(checked = false, description = _input.value)
+                sharedRepository.addTask(newTask)
+                _input.value = ""
+            }
         }
     }
 }

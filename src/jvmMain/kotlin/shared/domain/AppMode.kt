@@ -1,5 +1,5 @@
 package shared.domain
 
-enum class OverlayColor {
+enum class AppMode {
     ACTIVE, REST
 }

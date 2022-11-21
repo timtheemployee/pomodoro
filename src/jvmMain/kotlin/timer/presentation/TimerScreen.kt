@@ -41,7 +41,7 @@ import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import shared.domain.OverlayColor
+import shared.domain.AppMode
 import timer.domain.Tick
 import androidx.compose.runtime.getValue
 
@@ -54,11 +54,12 @@ fun TimerScreen(
     val timer by viewModel.timer.collectAsState()
     val isPaused by viewModel.isPausedIcon.collectAsState()
     val tick by viewModel.tick.collectAsState()
-    val overlayColor by viewModel.overlayColor.collectAsState()
+    val appMode by viewModel.appMode.collectAsState()
     val goals by viewModel.goals.collectAsState()
+    val rounds by viewModel.rounds.collectAsState()
 
     Column(
-        modifier = modifier.fillMaxSize().background(overlayColor.asAppColor()),
+        modifier = modifier.fillMaxSize().background(appMode.asAppColor()),
         horizontalAlignment = Alignment.CenterHorizontally,
         content = {
             Toolbar(
@@ -75,11 +76,11 @@ fun TimerScreen(
             Spacer(modifier = modifier.padding(vertical = 24.dp))
             RoundActionButton(
                 outlineColor = AppColors.textColor,
-                fillColor = overlayColor.asAppColor(),
+                fillColor = appMode.asAppColor(),
                 isPaused = isPaused,
                 onClick = viewModel::switchTimerMode
             )
-            Footer(goals, viewModel::makeFirstTaskCompleted)
+            Footer(goals, rounds, viewModel::makeFirstTaskCompleted)
         })
 }
 
@@ -176,7 +177,7 @@ private fun RoundActionButton(outlineColor: Color, fillColor: Color, isPaused: B
 
 
 @Composable
-private fun Footer(goals: String, onGoalsClicked: () -> Unit) {
+private fun Footer(goals: String, rounds: Int, onGoalsClicked: () -> Unit) {
     Box(modifier = Modifier.fillMaxSize(), content = {
         Card(
             shape = RoundedCornerShape(topStartPercent = 10, topEndPercent = 10),
@@ -220,7 +221,11 @@ private fun Footer(goals: String, onGoalsClicked: () -> Unit) {
                                     modifier = Modifier.padding(top = 4.dp)
                                 )
                                 Spacer(Modifier.padding(vertical = 4.dp))
-                                Text("4", color = AppColors.blue, style = MaterialTheme.typography.subtitle1)
+                                Text(
+                                    rounds.toString(),
+                                    color = AppColors.blue,
+                                    style = MaterialTheme.typography.subtitle1
+                                )
                             })
                     })
             })
@@ -259,8 +264,8 @@ private fun ColumnScope.Toolbar(
     )
 }
 
-private fun OverlayColor.asAppColor(): Color =
+private fun AppMode.asAppColor(): Color =
     when (this) {
-        OverlayColor.ACTIVE -> AppColors.red
-        OverlayColor.REST -> AppColors.blue
+        AppMode.ACTIVE -> AppColors.red
+        AppMode.REST -> AppColors.blue
     }
