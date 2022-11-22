@@ -12,6 +12,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import shared.data.SharedRepository
 import shared.domain.AppMode
+import shared.domain.Notification
 import tasks.domain.Task
 import timer.domain.Tick
 
@@ -101,9 +102,11 @@ class TimerViewModel(
         updateTick()
 
         if (milliseconds <= 0) {
-
             if (_appMode.value == AppMode.ACTIVE) {
                 _rounds.value += 1
+                sharedRepository.setNotification(Notification.ACTIVE)
+            } else {
+                sharedRepository.setNotification(Notification.REST)
             }
 
             sharedRepository.setMode(getOppositeAppMode())

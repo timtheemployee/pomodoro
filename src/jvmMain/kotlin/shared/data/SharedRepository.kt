@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import shared.domain.AppMode
 import shared.domain.KeyCombo
+import shared.domain.Notification
 import tasks.domain.Task
 
 class SharedRepository {
@@ -38,5 +39,13 @@ class SharedRepository {
 
     suspend fun setKeyCombo(combo: KeyCombo) {
         _keyCombo.emit(combo)
+    }
+
+
+    private val _notification = MutableSharedFlow<Notification?>()
+    val notification = _notification.asSharedFlow()
+
+    suspend fun setNotification(notification: Notification?) {
+        _notification.emit(notification)
     }
 }
