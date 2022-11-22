@@ -2,10 +2,15 @@ package tasks.presentation
 
 import AppColors
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -17,7 +22,10 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.List
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -27,6 +35,8 @@ import shared.domain.AppMode
 import tasks.domain.Task
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.unit.dp
+import java.awt.SystemColor.text
 
 @Composable
 fun TaskListScreen(
@@ -47,16 +57,32 @@ fun TaskListScreen(
                 value = input,
                 onTrailingIconClicked = viewModel::addNewTask
             )
-            Column(modifier = modifier
-                .verticalScroll(rememberScrollState())
-                .background(AppColors.white),
+            if (tasks.isEmpty()) {
+                EmptyListView(modifier = modifier.align(Alignment.Center))
+            } else {
+                Column(modifier = modifier
+                    .verticalScroll(rememberScrollState())
+                    .background(AppColors.white),
 
-                content = {
-                    tasks.forEach {
-                        TaskView(overlayColor.asAppColor(), it, viewModel::toggleTaskCompletion)
+                    content = {
+                        tasks.forEach {
+                            TaskView(overlayColor.asAppColor(), it, viewModel::toggleTaskCompletion)
+                        }
                     }
-                }
-            )
+                )
+            }
+        })
+}
+
+@Composable
+private fun EmptyListView(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        content = {
+            Text(text = "Add new task")
+            Spacer(modifier = modifier.height(16.dp))
+            Icon(Icons.Default.ArrowDownward, contentDescription = null)
         })
 }
 
