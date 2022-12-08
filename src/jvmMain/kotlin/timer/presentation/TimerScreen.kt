@@ -31,6 +31,7 @@ import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,9 +42,7 @@ import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import shared.domain.AppMode
 import timer.domain.Tick
-import androidx.compose.runtime.getValue
 
 @Composable
 fun TimerScreen(
@@ -54,12 +53,11 @@ fun TimerScreen(
     val timer by viewModel.timer.collectAsState()
     val isPaused by viewModel.isPausedIcon.collectAsState()
     val tick by viewModel.tick.collectAsState()
-    val appMode by viewModel.appMode.collectAsState()
     val goals by viewModel.goals.collectAsState()
     val rounds by viewModel.rounds.collectAsState()
 
     Column(
-        modifier = modifier.fillMaxSize().background(appMode.asAppColor()),
+        modifier = modifier.fillMaxSize().background(AppColors.dark),
         horizontalAlignment = Alignment.CenterHorizontally,
         content = {
             Toolbar(
@@ -70,13 +68,13 @@ fun TimerScreen(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
                 text = timer,
                 style = MaterialTheme.typography.h2,
-                color = AppColors.textColor
+                color = AppColors.gray
             )
             TickView(tick = tick)
             Spacer(modifier = modifier.padding(vertical = 24.dp))
             RoundActionButton(
-                outlineColor = AppColors.textColor,
-                fillColor = appMode.asAppColor(),
+                outlineColor = AppColors.gray,
+                fillColor = AppColors.dark,
                 isPaused = isPaused,
                 onClick = viewModel::switchTimerMode
             )
@@ -113,7 +111,7 @@ private fun verticalBarWithLabel(modifier: Modifier = Modifier, label: String) {
             modifier = modifier.offset(x = -(7.5.dp), y = 50.dp).width(20.dp),
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.body2,
-            color = AppColors.textColor
+            color = AppColors.gray
         )
     })
 }
@@ -123,7 +121,7 @@ private fun verticalBar(modifier: Modifier = Modifier, isHigh: Boolean) {
     Spacer(
         modifier = modifier.drawWithCache {
             onDrawBehind {
-                drawRoundRect(AppColors.textColor, cornerRadius = CornerRadius(10.dp.toPx()))
+                drawRoundRect(AppColors.gray, cornerRadius = CornerRadius(10.dp.toPx()))
             }
         }
             .height(if (isHigh) 48.dp else 32.dp)
@@ -245,7 +243,7 @@ private fun ColumnScope.Toolbar(
                     Icon(
                         Icons.Default.Refresh,
                         contentDescription = null,
-                        tint = AppColors.textColor
+                        tint = AppColors.gray
                     )
                 },
                 onClick = onSkip,
@@ -256,16 +254,10 @@ private fun ColumnScope.Toolbar(
                     Icon(
                         Icons.Default.Close,
                         contentDescription = null,
-                        tint = AppColors.textColor
+                        tint = AppColors.gray
                     )
                 }
             )
         }
     )
 }
-
-private fun AppMode.asAppColor(): Color =
-    when (this) {
-        AppMode.ACTIVE -> AppColors.red
-        AppMode.REST -> AppColors.blue
-    }

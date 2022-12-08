@@ -63,7 +63,7 @@ fun main() {
             onCloseRequest = ::exitApplication,
             state = WindowState(
                 placement = WindowPlacement.Floating,
-                size = DpSize(640.dp, 480.dp),
+                size = DpSize(560.dp, 720.dp),
                 position = WindowPosition.Aligned(Alignment.Center)
             ),
             onKeyEvent = { event ->
@@ -86,15 +86,7 @@ fun main() {
                 MaterialTheme(
                     content = {
                         Row(content = {
-                            TaskListScreen(modifier = Modifier.width(320.dp), viewModel = taskListViewModel)
-                            TimerScreen(
-                                modifier = Modifier.width(320.dp),
-                                viewModel = timerViewModel,
-                                onClose = {
-                                    scope.cancel()
-                                    exitApplication()
-                                }
-                            )
+                            TaskListScreen(modifier = Modifier.width(560.dp), viewModel = taskListViewModel)
                         })
                     }
                 )
@@ -134,7 +126,7 @@ private fun NotificationWindow(notification: Notification?, onOkClicked: () -> U
                         Text(
                             modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 24.dp),
                             text = text,
-                            color = AppColors.textColor,
+                            color = AppColors.gray,
                             style = MaterialTheme.typography.subtitle1,
                             textAlign = TextAlign.Center
                         )
@@ -143,7 +135,7 @@ private fun NotificationWindow(notification: Notification?, onOkClicked: () -> U
                             modifier = Modifier.align(Alignment.End),
                             content = {
                                 Text(
-                                    color = AppColors.textColor,
+                                    color = AppColors.gray,
                                     style = MaterialTheme.typography.caption,
                                     textAlign = TextAlign.Center,
                                     text = "Ok"

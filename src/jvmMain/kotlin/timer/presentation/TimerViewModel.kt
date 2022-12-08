@@ -35,9 +35,6 @@ class TimerViewModel(
     private val _tick = MutableStateFlow(Tick(index = 0, anchorSeconds = 0))
     val tick: StateFlow<Tick> = _tick
 
-    private val _appMode = MutableStateFlow(AppMode.ACTIVE)
-    val appMode: StateFlow<AppMode> = _appMode
-
     private val _goals = MutableStateFlow("0/0")
     val goals: StateFlow<String> = _goals
 
@@ -48,18 +45,6 @@ class TimerViewModel(
 
     init {
         _timer.value = getFormattedTime()
-
-        sharedRepository.mode
-            .onEach { _appMode.value = it }
-            .launchIn(scope)
-
-        sharedRepository.tasks
-            .onEach { tasks ->
-                val completed = tasks.filter { it.checked }.size
-                _goals.value = "$completed/${tasks.size}"
-                firstTask = tasks.firstOrNull { !it.checked }
-            }
-            .launchIn(scope)
 
         _rounds.value = 0
     }
@@ -89,12 +74,6 @@ class TimerViewModel(
         }
     }
 
-    private fun getOppositeAppMode(): AppMode =
-        when (_appMode.value) {
-            AppMode.ACTIVE -> AppMode.REST
-            AppMode.REST -> AppMode.ACTIVE
-        }
-
     private suspend fun tick() {
         delay(ONE_SECOND)
         milliseconds -= ONE_SECOND
@@ -102,14 +81,6 @@ class TimerViewModel(
         updateTick()
 
         if (milliseconds <= 0) {
-            if (_appMode.value == AppMode.ACTIVE) {
-                _rounds.value += 1
-                sharedRepository.setNotification(Notification.ACTIVE)
-            } else {
-                sharedRepository.setNotification(Notification.REST)
-            }
-
-            sharedRepository.setMode(getOppositeAppMode())
             resetTimer()
         }
     }
@@ -145,13 +116,7 @@ class TimerViewModel(
         )
 
     fun makeFirstTaskCompleted() {
-        firstTask?.let { task ->
-            val updatedTask = task.copy(checked = !task.checked)
 
-            scope.launch {
-                sharedRepository.replaceTask(task, updatedTask)
-            }
-        }
     }
 
     private companion object {
