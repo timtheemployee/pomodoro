@@ -9,7 +9,7 @@ data class Task(
 }
 
 enum class TaskStatus(val startIcon: String) {
-    CREATED("□"),
-    DONE("✓"),
-    CANCELLED("✕")
+    CREATED("⬜"),
+    DONE("✔"),
+    CANCELLED("❌")
 }

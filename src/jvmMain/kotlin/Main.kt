@@ -36,6 +36,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import main.MainViewModel
 import shared.data.SharedRepository
+import shared.domain.Navigation
 import shared.domain.Notification
 import tasks.presentation.TaskListScreen
 import tasks.presentation.TaskListViewModel
@@ -46,50 +47,51 @@ import timer.presentation.TimerViewModel
 fun main() {
     application {
         val state = remember { MainState() }
-        val scope = state.scope
         val mainViewModel = state.mainViewModel
-        val timerViewModel = state.timerViewModel
         val taskListViewModel = state.taskListViewModel
 
         val notification by mainViewModel.notification.collectAsState()
+        val navigation by mainViewModel.navigation.collectAsState()
 
         if (notification != null) {
             NotificationWindow(notification, mainViewModel::clearNotification)
         }
 
-        Window(
-            undecorated = true,
-            resizable = false,
-            onCloseRequest = ::exitApplication,
-            state = WindowState(
-                placement = WindowPlacement.Floating,
-                size = DpSize(560.dp, 720.dp),
-                position = WindowPosition.Aligned(Alignment.Center)
-            ),
-            onKeyEvent = { event ->
-                when {
-                    event.isShiftPressed && event.key == Key.Enter && event.type == KeyEventType.KeyUp -> {
-                        mainViewModel.makeFirstTaskCompeted()
-                        true
-                    }
+        if (navigation != Navigation.CLOSE) {
+            Window(
+                undecorated = true,
+                resizable = false,
+                onCloseRequest = ::exitApplication,
+                state = WindowState(
+                    placement = WindowPlacement.Floating,
+                    size = DpSize(560.dp, 720.dp),
+                    position = WindowPosition.Aligned(Alignment.Center)
+                ),
+                onKeyEvent = { event ->
+                    when {
+                        event.isShiftPressed && event.key == Key.Enter && event.type == KeyEventType.KeyUp -> {
+                            mainViewModel.makeFirstTaskCompeted()
+                            true
+                        }
 
-                    event.isAltPressed && event.key == Key.Enter -> {
-                        mainViewModel.createNewTask()
-                        true
-                    }
+                        event.isAltPressed && event.key == Key.Enter -> {
+                            mainViewModel.createNewTask()
+                            true
+                        }
 
-                    else -> false
+                        else -> false
+                    }
                 }
-            }
-        ) {
-            WindowDraggableArea {
-                MaterialTheme(
-                    content = {
-                        Row(content = {
-                            TaskListScreen(modifier = Modifier.width(560.dp), viewModel = taskListViewModel)
-                        })
-                    }
-                )
+            ) {
+                WindowDraggableArea {
+                    MaterialTheme(
+                        content = {
+                            Row(content = {
+                                TaskListScreen(modifier = Modifier.width(560.dp), viewModel = taskListViewModel)
+                            })
+                        }
+                    )
+                }
             }
         }
     }
@@ -149,7 +151,7 @@ private fun NotificationWindow(notification: Notification?, onOkClicked: () -> U
 }
 
 class MainState {
-    val scope = CoroutineScope(Dispatchers.IO)
+    private val scope = CoroutineScope(Dispatchers.IO)
     private val sharedRepository = SharedRepository()
 
     val mainViewModel = MainViewModel(scope, sharedRepository)

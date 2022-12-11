@@ -6,13 +6,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import shared.data.SharedRepository
-import shared.domain.AppMode
-import shared.domain.Notification
 import tasks.domain.Task
 import timer.domain.Tick
 

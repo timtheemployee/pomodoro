@@ -7,8 +7,8 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import shared.data.SharedRepository
-import shared.domain.AppMode
 import shared.domain.KeyCombo
+import shared.domain.Navigation
 import tasks.domain.Task
 import tasks.domain.TaskStatus
 
@@ -73,6 +73,12 @@ class TaskListViewModel(
                 sharedRepository.addTask(newTask)
                 _input.value = ""
             }
+        }
+    }
+
+    fun closeApp() {
+        scope.launch {
+            sharedRepository.setNavigation(Navigation.CLOSE)
         }
     }
 }
