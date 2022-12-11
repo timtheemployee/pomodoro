@@ -42,9 +42,7 @@ class TaskListViewModel(
             }
 
             KeyCombo.ADD_NEW_TASK -> {
-                if (_input.value.isNotEmpty()) {
-                    addNewTask()
-                }
+                addNewTask()
             }
         }
     }

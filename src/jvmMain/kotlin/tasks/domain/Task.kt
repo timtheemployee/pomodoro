@@ -1,6 +1,9 @@
 package tasks.domain
 
+import java.util.UUID
+
 data class Task(
+    val id: String = UUID.randomUUID().toString(),
     val status: TaskStatus,
     val description: String
 ) {
