@@ -2,10 +2,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.window.WindowDraggableArea
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -31,17 +31,16 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
+import control.presentation.ControlScreen
+import control.presentation.ControlViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import main.MainViewModel
 import shared.data.SharedRepository
 import shared.domain.Navigation
 import shared.domain.Notification
 import tasks.presentation.TaskListScreen
 import tasks.presentation.TaskListViewModel
-import timer.presentation.TimerScreen
-import timer.presentation.TimerViewModel
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
@@ -65,7 +64,7 @@ fun main() {
                 state = WindowState(
                     placement = WindowPlacement.Floating,
                     size = DpSize(560.dp, 720.dp),
-                    position = WindowPosition.Aligned(Alignment.Center)
+                    position = WindowPosition.Aligned(Alignment.Center),
                 ),
                 onKeyEvent = { event ->
                     when {
@@ -86,8 +85,19 @@ fun main() {
                 WindowDraggableArea {
                     MaterialTheme(
                         content = {
-                            Row(content = {
-                                TaskListScreen(modifier = Modifier.width(560.dp), viewModel = taskListViewModel)
+                            Box(content = {
+                                TaskListScreen(
+                                    modifier = Modifier.fillMaxSize(),
+                                    viewModel = taskListViewModel
+                                )
+                                ControlScreen(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(80.dp)
+                                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                                        .align(Alignment.BottomCenter),
+                                    controlViewModel = state.controlViewModel
+                                )
                             })
                         }
                     )
@@ -155,6 +165,6 @@ class MainState {
     private val sharedRepository = SharedRepository()
 
     val mainViewModel = MainViewModel(scope, sharedRepository)
-    val timerViewModel = TimerViewModel(scope, sharedRepository)
+    val controlViewModel = ControlViewModel(scope, sharedRepository)
     val taskListViewModel = TaskListViewModel(scope, sharedRepository)
 }

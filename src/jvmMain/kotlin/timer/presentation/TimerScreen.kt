@@ -42,18 +42,19 @@ import androidx.compose.ui.geometry.toRect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import control.presentation.ControlViewModel
 import timer.domain.Tick
 
+@Deprecated("Will be removed soon")
 @Composable
 fun TimerScreen(
     modifier: Modifier = Modifier,
-    viewModel: TimerViewModel,
+    viewModel: ControlViewModel,
     onClose: () -> Unit
 ) {
     val timer by viewModel.timer.collectAsState()
-    val isPaused by viewModel.isPausedIcon.collectAsState()
-    val tick by viewModel.tick.collectAsState()
-    val goals by viewModel.goals.collectAsState()
+    val isPaused by viewModel.stopped.collectAsState()
+    val goals by viewModel.tasksState.collectAsState()
     val rounds by viewModel.rounds.collectAsState()
 
     Column(
@@ -61,7 +62,7 @@ fun TimerScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         content = {
             Toolbar(
-                onSkip = viewModel::resetTimer,
+                onSkip = { },
                 onClose = { onClose() }
             )
             Text(
@@ -70,7 +71,6 @@ fun TimerScreen(
                 style = MaterialTheme.typography.h2,
                 color = AppColors.gray
             )
-            TickView(tick = tick)
             Spacer(modifier = modifier.padding(vertical = 24.dp))
             RoundActionButton(
                 outlineColor = AppColors.gray,
@@ -78,7 +78,6 @@ fun TimerScreen(
                 isPaused = isPaused,
                 onClick = viewModel::switchTimerMode
             )
-            Footer(goals, rounds, viewModel::makeFirstTaskCompleted)
         })
 }
 
