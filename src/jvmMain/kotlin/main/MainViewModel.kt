@@ -9,16 +9,14 @@ import kotlinx.coroutines.launch
 import shared.data.SharedRepository
 import shared.domain.KeyCombo
 import shared.domain.Navigation
-import shared.domain.Notification
-import tasks.domain.Task
 
 class MainViewModel(
     private val scope: CoroutineScope,
     private val sharedRepository: SharedRepository
 ) {
 
-    private val _notification = MutableStateFlow<Notification?>(null)
-    val notification: StateFlow<Notification?> = _notification
+    private val _notification = MutableStateFlow(false)
+    val notification: StateFlow<Boolean> = _notification
 
     private val _navigation = MutableStateFlow(Navigation.TASK_LIST)
     val navigation: StateFlow<Navigation> = _navigation
@@ -31,6 +29,10 @@ class MainViewModel(
         sharedRepository.navigation
             .onEach { _navigation.value = it }
             .launchIn(scope)
+
+        scope.launch {
+            sharedRepository.setDefaultTimer()
+        }
     }
 
     fun createNewTask() {
@@ -45,7 +47,7 @@ class MainViewModel(
         }
     }
 
-    fun clearNotification() {
-        scope.launch { sharedRepository.setNotification(null) }
+    fun requestFocus() {
+        scope.launch { sharedRepository.setNotification(false) }
     }
 }

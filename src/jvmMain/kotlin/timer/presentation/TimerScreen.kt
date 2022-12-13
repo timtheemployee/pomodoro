@@ -55,7 +55,6 @@ fun TimerScreen(
     val timer by viewModel.timer.collectAsState()
     val isPaused by viewModel.stopped.collectAsState()
     val goals by viewModel.tasksState.collectAsState()
-    val rounds by viewModel.rounds.collectAsState()
 
     Column(
         modifier = modifier.fillMaxSize().background(AppColors.dark),

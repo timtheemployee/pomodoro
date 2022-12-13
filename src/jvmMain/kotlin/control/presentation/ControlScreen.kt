@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -14,9 +15,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.TextButton
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowLeft
+import androidx.compose.material.icons.filled.ArrowRight
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.runtime.Composable
@@ -32,6 +37,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
+import androidx.compose.ui.unit.sp
 import timer.domain.TasksState
 
 @Composable
@@ -43,13 +51,80 @@ fun ControlScreen(
     val remainingTime by controlViewModel.timer.collectAsState()
     val tasksState by controlViewModel.tasksState.collectAsState()
     val timerPercent by controlViewModel.timerPercent.collectAsState()
+    val timeConfig by controlViewModel.configTimer.collectAsState()
+    val elapsedTime by controlViewModel.elapsed.collectAsState()
 
     Row(modifier = modifier.shadow(1.dp), verticalAlignment = Alignment.CenterVertically,
         content = {
             ActionButton(timerPercent, stopped, controlViewModel::switchTimerMode)
             TimerView(remainingTime, stopped)
             TaskListStatusView(tasksState)
+            FocusTimeSettingsView(
+                stopped,
+                timeConfig,
+                controlViewModel::increaseTimer,
+                controlViewModel::decreaseTimer
+            )
+            ElapsedTimeView(formattedTime = elapsedTime)
         }
+    )
+}
+
+@Composable
+private fun ElapsedTimeView(
+    formattedTime: String
+) {
+    Column(
+        modifier = Modifier.padding(horizontal = 8.dp),
+        content = {
+            Text(
+                text = "Time elapsed",
+                style = MaterialTheme.typography.subtitle2,
+                color = AppColors.gray,
+            )
+            Text(
+                text = formattedTime,
+                style = MaterialTheme.typography.subtitle1,
+                color = AppColors.gray,
+                fontSize = 24.sp
+            )
+        }
+    )
+}
+
+@Composable
+private fun FocusTimeSettingsView(
+    enabled: Boolean,
+    time: String,
+    onIncrease: () -> Unit,
+    onDecrease: () -> Unit
+) {
+    IconButton(
+        onClick = onDecrease,
+        content = {
+            Icon(
+                Icons.Default.ArrowLeft,
+                contentDescription = null,
+                tint = AppColors.gray
+            )
+        },
+        enabled = enabled,
+    )
+    Text(
+        text = time,
+        color = Color.White,
+        style = MaterialTheme.typography.h5,
+    )
+    IconButton(
+        onClick = onIncrease,
+        content = {
+            Icon(
+                Icons.Default.ArrowRight,
+                contentDescription = null,
+                tint = AppColors.gray
+            )
+        },
+        enabled = enabled,
     )
 }
 
@@ -86,7 +161,8 @@ private fun TimerView(remainingTime: String, rest: Boolean) {
                 text = remainingTime,
                 style = MaterialTheme.typography.subtitle1,
                 color = AppColors.gray,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                fontSize = 24.sp
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(

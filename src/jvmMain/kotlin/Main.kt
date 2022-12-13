@@ -38,126 +38,111 @@ import kotlinx.coroutines.Dispatchers
 import main.MainViewModel
 import shared.data.SharedRepository
 import shared.domain.Navigation
-import shared.domain.Notification
 import tasks.presentation.TaskListScreen
 import tasks.presentation.TaskListViewModel
 
 @OptIn(ExperimentalComposeUiApi::class)
-fun main() {
-    application {
-        val state = remember { MainState() }
-        val mainViewModel = state.mainViewModel
-        val taskListViewModel = state.taskListViewModel
+fun main() = application {
+    val state = remember { MainState() }
+    val mainViewModel = state.mainViewModel
+    val taskListViewModel = state.taskListViewModel
 
-        val notification by mainViewModel.notification.collectAsState()
-        val navigation by mainViewModel.navigation.collectAsState()
+    val navigation by mainViewModel.navigation.collectAsState()
+    val requestNotification by mainViewModel.notification.collectAsState()
 
-        if (notification != null) {
-            NotificationWindow(notification, mainViewModel::clearNotification)
-        }
+    if (requestNotification) {
+        NotificationWindow(mainViewModel::requestFocus)
+    }
 
-        if (navigation != Navigation.CLOSE) {
-            Window(
-                undecorated = true,
-                resizable = false,
-                onCloseRequest = ::exitApplication,
-                state = WindowState(
-                    placement = WindowPlacement.Floating,
-                    size = DpSize(560.dp, 720.dp),
-                    position = WindowPosition.Aligned(Alignment.Center),
-                ),
-                onKeyEvent = { event ->
-                    when {
-                        event.isShiftPressed && event.key == Key.Enter && event.type == KeyEventType.KeyUp -> {
-                            mainViewModel.makeFirstTaskCompeted()
-                            true
-                        }
-
-                        event.isAltPressed && event.key == Key.Enter -> {
-                            mainViewModel.createNewTask()
-                            true
-                        }
-
-                        else -> false
+    if (navigation != Navigation.CLOSE) {
+        Window(
+            undecorated = true,
+            resizable = false,
+            onCloseRequest = ::exitApplication,
+            state = WindowState(
+                placement = WindowPlacement.Floating,
+                size = DpSize(560.dp, 720.dp),
+                position = WindowPosition.Aligned(Alignment.Center),
+            ),
+            onKeyEvent = { event ->
+                when {
+                    event.isShiftPressed && event.key == Key.Enter && event.type == KeyEventType.KeyUp -> {
+                        mainViewModel.makeFirstTaskCompeted()
+                        true
                     }
+
+                    event.isAltPressed && event.key == Key.Enter -> {
+                        mainViewModel.createNewTask()
+                        true
+                    }
+
+                    else -> false
                 }
-            ) {
-                WindowDraggableArea {
-                    MaterialTheme(
-                        content = {
-                            Box(content = {
-                                TaskListScreen(
-                                    modifier = Modifier.fillMaxSize(),
-                                    viewModel = taskListViewModel
-                                )
-                                ControlScreen(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(80.dp)
-                                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                                        .align(Alignment.BottomCenter),
-                                    controlViewModel = state.controlViewModel
-                                )
-                            })
-                        }
-                    )
-                }
+            }
+        ) {
+            WindowDraggableArea {
+                MaterialTheme(
+                    content = {
+                        Box(content = {
+                            TaskListScreen(
+                                modifier = Modifier.fillMaxSize(),
+                                viewModel = taskListViewModel
+                            )
+                            ControlScreen(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(80.dp)
+                                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                                    .align(Alignment.BottomCenter),
+                                controlViewModel = state.controlViewModel
+                            )
+                        })
+                    }
+                )
             }
         }
     }
 }
 
 @Composable
-private fun NotificationWindow(notification: Notification?, onOkClicked: () -> Unit) {
-    if (notification != null) {
-        val color = when (notification) {
-            Notification.ACTIVE -> AppColors.red
-            Notification.REST -> AppColors.blue
+private fun NotificationWindow(onFocusReturnClick: () -> Unit) {
+    Window(
+        alwaysOnTop = true,
+        undecorated = true,
+        resizable = false,
+        state = WindowState(
+            placement = WindowPlacement.Floating,
+            size = DpSize(320.dp, 96.dp),
+            position = WindowPosition.Aligned(Alignment.BottomEnd)
+        ),
+        onCloseRequest = {},
+        content = {
+            Column(
+                verticalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier.fillMaxSize().background(AppColors.dark),
+                content = {
+                    Text(
+                        modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 24.dp),
+                        text = "Work time is over! Take time to rest",
+                        color = AppColors.gray,
+                        style = MaterialTheme.typography.subtitle1,
+                        textAlign = TextAlign.Center
+                    )
+                    TextButton(
+                        onClick = onFocusReturnClick,
+                        modifier = Modifier.align(Alignment.End),
+                        content = {
+                            Text(
+                                color = AppColors.gray,
+                                style = MaterialTheme.typography.caption,
+                                textAlign = TextAlign.Center,
+                                text = "Return to focus"
+                            )
+                        }
+                    )
+                })
         }
-
-        val text = when (notification) {
-            Notification.ACTIVE -> "Active time is up! Prepare to rest"
-            Notification.REST -> "Rest time is up! Prepare to work"
-        }
-
-        Window(
-            alwaysOnTop = true,
-            undecorated = true,
-            resizable = false,
-            state = WindowState(
-                placement = WindowPlacement.Floating,
-                size = DpSize(320.dp, 96.dp),
-                position = WindowPosition.Aligned(Alignment.BottomEnd)
-            ),
-            onCloseRequest = {},
-            content = {
-                Column(
-                    verticalArrangement = Arrangement.SpaceEvenly,
-                    modifier = Modifier.fillMaxSize().background(color),
-                    content = {
-                        Text(
-                            modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 24.dp),
-                            text = text,
-                            color = AppColors.gray,
-                            style = MaterialTheme.typography.subtitle1,
-                            textAlign = TextAlign.Center
-                        )
-                        TextButton(
-                            onClick = onOkClicked,
-                            modifier = Modifier.align(Alignment.End),
-                            content = {
-                                Text(
-                                    color = AppColors.gray,
-                                    style = MaterialTheme.typography.caption,
-                                    textAlign = TextAlign.Center,
-                                    text = "Ok"
-                                )
-                            }
-                        )
-                    })
-            }
-        )
-    }
+    )
 }
 
 class MainState {

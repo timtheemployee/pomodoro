@@ -4,8 +4,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import shared.domain.KeyCombo
 import shared.domain.Navigation
-import shared.domain.Notification
 import tasks.domain.Task
+import kotlin.math.min
+import kotlin.math.max
 
 class SharedRepository {
 
@@ -34,12 +35,11 @@ class SharedRepository {
         _keyCombo.emit(combo)
     }
 
-
-    private val _notification = MutableSharedFlow<Notification?>()
+    private val _notification = MutableSharedFlow<Boolean>()
     val notification = _notification.asSharedFlow()
 
-    suspend fun setNotification(notification: Notification?) {
-        _notification.emit(notification)
+    suspend fun setNotification(enabled: Boolean) {
+        _notification.emit(enabled)
     }
 
     private val _navigation = MutableSharedFlow<Navigation>()
@@ -47,5 +47,29 @@ class SharedRepository {
 
     suspend fun setNavigation(navigation: Navigation) {
         _navigation.emit(navigation)
+    }
+
+    private val _timer = MutableSharedFlow<Long>(replay = 1)
+    val timer = _timer.asSharedFlow()
+
+    suspend fun setTimer(time: Long) {
+        _timer.emit(max(min(time, SIXTY_MINUTES), FIVE_MINUTES))
+    }
+
+    suspend fun setDefaultTimer() {
+        _timer.emit(TWENTY_FIVE_MINUTES)
+    }
+
+    private val _elapsed = MutableSharedFlow<Long>()
+    val elapsed = _elapsed.asSharedFlow()
+
+    suspend fun setElapsedTime(elapsed: Long) {
+        _elapsed.emit(elapsed)
+    }
+
+    private companion object {
+        const val TWENTY_FIVE_MINUTES = 1500000L
+        const val SIXTY_MINUTES = 3600000L
+        const val FIVE_MINUTES = 300000L
     }
 }
