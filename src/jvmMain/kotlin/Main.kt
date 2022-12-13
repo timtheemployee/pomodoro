@@ -2,10 +2,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.window.WindowDraggableArea
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -31,40 +31,38 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
+import control.presentation.ControlScreen
+import control.presentation.ControlViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import main.MainViewModel
 import shared.data.SharedRepository
-import shared.domain.Notification
+import shared.domain.Navigation
 import tasks.presentation.TaskListScreen
 import tasks.presentation.TaskListViewModel
-import timer.presentation.TimerScreen
-import timer.presentation.TimerViewModel
 
 @OptIn(ExperimentalComposeUiApi::class)
-fun main() {
-    application {
-        val state = remember { MainState() }
-        val scope = state.scope
-        val mainViewModel = state.mainViewModel
-        val timerViewModel = state.timerViewModel
-        val taskListViewModel = state.taskListViewModel
+fun main() = application {
+    val state = remember { MainState() }
+    val mainViewModel = state.mainViewModel
+    val taskListViewModel = state.taskListViewModel
 
-        val notification by mainViewModel.notification.collectAsState()
+    val navigation by mainViewModel.navigation.collectAsState()
+    val requestNotification by mainViewModel.notification.collectAsState()
 
-        if (notification != null) {
-            NotificationWindow(notification, mainViewModel::clearNotification)
-        }
+    if (requestNotification) {
+        NotificationWindow(mainViewModel::requestFocus)
+    }
 
+    if (navigation != Navigation.CLOSE) {
         Window(
             undecorated = true,
             resizable = false,
             onCloseRequest = ::exitApplication,
             state = WindowState(
                 placement = WindowPlacement.Floating,
-                size = DpSize(640.dp, 480.dp),
-                position = WindowPosition.Aligned(Alignment.Center)
+                size = DpSize(560.dp, 720.dp),
+                position = WindowPosition.Aligned(Alignment.Center),
             ),
             onKeyEvent = { event ->
                 when {
@@ -85,15 +83,18 @@ fun main() {
             WindowDraggableArea {
                 MaterialTheme(
                     content = {
-                        Row(content = {
-                            TaskListScreen(modifier = Modifier.width(320.dp), viewModel = taskListViewModel)
-                            TimerScreen(
-                                modifier = Modifier.width(320.dp),
-                                viewModel = timerViewModel,
-                                onClose = {
-                                    scope.cancel()
-                                    exitApplication()
-                                }
+                        Box(content = {
+                            TaskListScreen(
+                                modifier = Modifier.fillMaxSize(),
+                                viewModel = taskListViewModel
+                            )
+                            ControlScreen(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(80.dp)
+                                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                                    .align(Alignment.BottomCenter),
+                                controlViewModel = state.controlViewModel
                             )
                         })
                     }
@@ -104,63 +105,51 @@ fun main() {
 }
 
 @Composable
-private fun NotificationWindow(notification: Notification?, onOkClicked: () -> Unit) {
-    if (notification != null) {
-        val color = when (notification) {
-            Notification.ACTIVE -> AppColors.red
-            Notification.REST -> AppColors.blue
+private fun NotificationWindow(onFocusReturnClick: () -> Unit) {
+    Window(
+        alwaysOnTop = true,
+        undecorated = true,
+        resizable = false,
+        state = WindowState(
+            placement = WindowPlacement.Floating,
+            size = DpSize(320.dp, 96.dp),
+            position = WindowPosition.Aligned(Alignment.BottomEnd)
+        ),
+        onCloseRequest = {},
+        content = {
+            Column(
+                verticalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier.fillMaxSize().background(AppColors.dark),
+                content = {
+                    Text(
+                        modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 24.dp),
+                        text = "Work time is over! Take time to rest",
+                        color = AppColors.gray,
+                        style = MaterialTheme.typography.subtitle1,
+                        textAlign = TextAlign.Center
+                    )
+                    TextButton(
+                        onClick = onFocusReturnClick,
+                        modifier = Modifier.align(Alignment.End),
+                        content = {
+                            Text(
+                                color = AppColors.gray,
+                                style = MaterialTheme.typography.caption,
+                                textAlign = TextAlign.Center,
+                                text = "Return to focus"
+                            )
+                        }
+                    )
+                })
         }
-
-        val text = when (notification) {
-            Notification.ACTIVE -> "Active time is up! Prepare to rest"
-            Notification.REST -> "Rest time is up! Prepare to work"
-        }
-
-        Window(
-            alwaysOnTop = true,
-            undecorated = true,
-            resizable = false,
-            state = WindowState(
-                placement = WindowPlacement.Floating,
-                size = DpSize(320.dp, 96.dp),
-                position = WindowPosition.Aligned(Alignment.BottomEnd)
-            ),
-            onCloseRequest = {},
-            content = {
-                Column(
-                    verticalArrangement = Arrangement.SpaceEvenly,
-                    modifier = Modifier.fillMaxSize().background(color),
-                    content = {
-                        Text(
-                            modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 24.dp),
-                            text = text,
-                            color = AppColors.textColor,
-                            style = MaterialTheme.typography.subtitle1,
-                            textAlign = TextAlign.Center
-                        )
-                        TextButton(
-                            onClick = onOkClicked,
-                            modifier = Modifier.align(Alignment.End),
-                            content = {
-                                Text(
-                                    color = AppColors.textColor,
-                                    style = MaterialTheme.typography.caption,
-                                    textAlign = TextAlign.Center,
-                                    text = "Ok"
-                                )
-                            }
-                        )
-                    })
-            }
-        )
-    }
+    )
 }
 
 class MainState {
-    val scope = CoroutineScope(Dispatchers.IO)
+    private val scope = CoroutineScope(Dispatchers.IO)
     private val sharedRepository = SharedRepository()
 
     val mainViewModel = MainViewModel(scope, sharedRepository)
-    val timerViewModel = TimerViewModel(scope, sharedRepository)
+    val controlViewModel = ControlViewModel(scope, sharedRepository)
     val taskListViewModel = TaskListViewModel(scope, sharedRepository)
 }
