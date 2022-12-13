@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 import shared.data.SharedRepository
 import tasks.domain.Task
 import tasks.domain.TaskStatus
-import timer.domain.TasksState
+import control.domain.TasksState
 import java.util.concurrent.TimeUnit
 
 class ControlViewModel(

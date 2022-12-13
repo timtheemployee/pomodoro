@@ -1,4 +1,4 @@
-package timer.domain
+package control.domain
 
 import kotlin.math.roundToInt
 
