@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Colors
 import androidx.compose.material.Icon
@@ -142,7 +144,7 @@ private fun TaskInputView(
         ),
         placeholder = { Text("\uD83D\uDCDD Input new task here") },
         singleLine = true,
-        trailingIcon = { TaskInputTrailingView(onClick = onTrailingIconClicked, tint = AppColors.gray) }
+        trailingIcon = { TaskInputTrailingView(onClick = onTrailingIconClicked, tint = AppColors.gray) },
     )
 }
 

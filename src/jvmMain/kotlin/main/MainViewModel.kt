@@ -35,16 +35,8 @@ class MainViewModel(
         }
     }
 
-    fun createNewTask() {
-        scope.launch {
-            sharedRepository.setKeyCombo(KeyCombo.ADD_NEW_TASK)
-        }
-    }
-
-    fun makeFirstTaskCompeted() {
-        scope.launch {
-            sharedRepository.setKeyCombo(KeyCombo.DONE_FIRST)
-        }
+    fun obtainKeyComboKey(keyCombo: KeyCombo?) {
+        scope.launch { sharedRepository.setKeyCombo(keyCombo) }
     }
 
     fun requestFocus() {

@@ -1,5 +1,6 @@
 package tasks.presentation
 
+import androidx.compose.ui.text.toLowerCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +24,8 @@ class TaskListViewModel(
     private val _tasks = MutableStateFlow(emptyList<Task>())
     val tasks: StateFlow<List<Task>> = _tasks
 
+    private var keyCombo: KeyCombo? = null
+
     init {
         sharedRepository.tasks
             .onEach { _tasks.value = it }
@@ -33,17 +36,11 @@ class TaskListViewModel(
             .launchIn(scope)
     }
 
-    private fun obtainKeyCombo(combo: KeyCombo) {
-        when (combo) {
-            KeyCombo.DONE_FIRST -> {
-                _tasks.value
-                    .firstOrNull { it.status == TaskStatus.CREATED }
-                    ?.let(::toggleTaskCompletion)
-            }
+    private fun obtainKeyCombo(combo: KeyCombo?) {
+        this.keyCombo = combo
 
-            KeyCombo.ADD_NEW_TASK -> {
-                addNewTask()
-            }
+        if (keyCombo?.onlyEnterPressed == true) {
+            addNewTask()
         }
     }
 
@@ -61,7 +58,15 @@ class TaskListViewModel(
     }
 
     fun updateInputField(text: String) {
-        _input.value = text
+        when {
+            keyCombo?.altPressed == true && text.lastOrNull()?.lowercase() == "d" -> toggleFirstAvailableTask()
+            else -> _input.value = text
+        }
+    }
+
+    private fun toggleFirstAvailableTask() {
+        _tasks.value.firstOrNull { it.status == TaskStatus.CREATED }
+            ?.let(::toggleTaskCompletion)
     }
 
     fun addNewTask() {

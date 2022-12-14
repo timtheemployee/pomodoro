@@ -28,10 +28,10 @@ class SharedRepository {
         _tasks.emit(storedTasks.toList())
     }
 
-    private val _keyCombo = MutableSharedFlow<KeyCombo>()
+    private val _keyCombo = MutableSharedFlow<KeyCombo?>()
     val keyCombo = _keyCombo.asSharedFlow()
 
-    suspend fun setKeyCombo(combo: KeyCombo) {
+    suspend fun setKeyCombo(combo: KeyCombo?) {
         _keyCombo.emit(combo)
     }
 

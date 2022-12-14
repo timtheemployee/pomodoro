@@ -20,6 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isAltPressed
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
@@ -37,6 +39,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import main.MainViewModel
 import shared.data.SharedRepository
+import shared.domain.KeyCombo
 import shared.domain.Navigation
 import tasks.presentation.TaskListScreen
 import tasks.presentation.TaskListViewModel
@@ -65,19 +68,18 @@ fun main() = application {
                 position = WindowPosition.Aligned(Alignment.Center),
             ),
             onKeyEvent = { event ->
-                when {
-                    event.isShiftPressed && event.key == Key.Enter && event.type == KeyEventType.KeyUp -> {
-                        mainViewModel.makeFirstTaskCompeted()
-                        true
-                    }
-
-                    event.isAltPressed && event.key == Key.Enter -> {
-                        mainViewModel.createNewTask()
-                        true
-                    }
-
-                    else -> false
+                val combo = KeyCombo(
+                    shiftPressed = event.isShiftPressed,
+                    altPressed = event.isAltPressed,
+                    ctrlPressed = event.isCtrlPressed,
+                    enterPressed = event.key == Key.Enter && event.type == KeyEventType.KeyDown
+                )
+                if (combo.anyControlKeyPressed) {
+                    mainViewModel.obtainKeyComboKey(combo)
+                } else {
+                    mainViewModel.obtainKeyComboKey(null)
                 }
+                false
             }
         ) {
             WindowDraggableArea {
