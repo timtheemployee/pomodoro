@@ -50,7 +50,9 @@ fun ControlScreen(
     val timeConfig by controlViewModel.configTimer.collectAsState()
     val elapsedTime by controlViewModel.elapsed.collectAsState()
 
-    Row(modifier = modifier.shadow(1.dp), verticalAlignment = Alignment.CenterVertically,
+    Row(modifier = modifier.shadow(1.dp)
+        .background(AppColors.dark),
+        verticalAlignment = Alignment.CenterVertically,
         content = {
             ActionButton(timerPercent, stopped, controlViewModel::switchTimerMode)
             TimerView(remainingTime, stopped)

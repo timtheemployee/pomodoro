@@ -25,7 +25,7 @@ kotlin {
     sourceSets {
         val jvmMain by getting {
             dependencies {
-                implementation(compose.desktop.currentOs)
+                implementation(compose.desktop.windows_x64)
                 implementation("org.jetbrains.compose.ui:ui-graphics-desktop:1.1.0")
                 implementation("org.jetbrains.compose.ui:ui-geometry-desktop:1.1.0")
                 implementation("org.jetbrains.compose.foundation:foundation-desktop:1.1.0")

@@ -1,23 +1,17 @@
 package tasks.presentation
 
 import AppColors
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Colors
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
@@ -30,17 +24,23 @@ import androidx.compose.material.icons.filled.Done
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import tasks.domain.Task
 import tasks.domain.TaskStatus
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TaskListScreen(
     modifier: Modifier = Modifier,
@@ -49,21 +49,34 @@ fun TaskListScreen(
     val tasks by viewModel.tasks.collectAsState()
     val input by viewModel.input.collectAsState()
 
-    Column(modifier = modifier.fillMaxHeight()
-        .verticalScroll(rememberScrollState())
-        .background(AppColors.dark)
-        .padding(8.dp),
+    val listState = rememberLazyListState(tasks.lastIndex + 1)
+    val coroutineScope = rememberCoroutineScope()
+    val focusRequester = remember { FocusRequester() }
+
+    LazyColumn(
+        modifier = modifier
+            .fillMaxHeight()
+            .background(AppColors.dark)
+            .padding(8.dp),
+        state = listState,
         content = {
-            Toolbar(modifier, viewModel::closeApp)
-            tasks.forEach {
-                TaskView(modifier, it, viewModel::toggleTaskCompletion)
+            stickyHeader { Toolbar(modifier, viewModel::closeApp) }
+            items(tasks.size) {
+                TaskView(modifier, tasks[it], viewModel::toggleTaskCompletion)
             }
-            TaskInputView(
-                modifier = modifier.fillMaxWidth(),
-                onTextChanged = viewModel::updateInputField,
-                value = input,
-                onTrailingIconClicked = viewModel::addNewTask
-            )
+            item {
+                TaskInputView(
+                    modifier = modifier.fillMaxWidth().focusRequester(focusRequester).padding(bottom = 80.dp + 16.dp),
+                    onTextChanged = viewModel::updateInputField,
+                    value = input,
+                    onTrailingIconClicked = viewModel::addNewTask
+                )
+            }
+
+            coroutineScope.launch {
+                listState.animateScrollToItem(tasks.lastIndex + 1, -100)
+                focusRequester.requestFocus()
+            }
         }
     )
 }
@@ -73,26 +86,29 @@ private fun Toolbar(
     modifier: Modifier = Modifier,
     onCloseClick: () -> Unit,
 ) {
-    Box(modifier = modifier.padding(horizontal = 8.dp, vertical = 8.dp), content = {
-        Text(
-            modifier = Modifier.align(Alignment.Center),
-            text = "\uD83C\uDF45 Pomodoro",
-            style = MaterialTheme.typography.subtitle1,
-            color = AppColors.gray,
-            textAlign = TextAlign.Center
-        )
-        IconButton(
-            modifier = Modifier.size(24.dp).align(Alignment.CenterEnd),
-            onClick = onCloseClick,
-            content = {
-                Icon(
-                    Icons.Default.Close,
-                    contentDescription = null,
-                    tint = AppColors.gray
-                )
-            }
-        )
-    })
+    Box(modifier = modifier
+        .padding(horizontal = 8.dp, vertical = 8.dp)
+        .background(AppColors.dark),
+        content = {
+            Text(
+                modifier = Modifier.align(Alignment.Center),
+                text = "\uD83C\uDF45 Pomodoro",
+                style = MaterialTheme.typography.subtitle1,
+                color = AppColors.gray,
+                textAlign = TextAlign.Center
+            )
+            IconButton(
+                modifier = Modifier.size(24.dp).align(Alignment.CenterEnd),
+                onClick = onCloseClick,
+                content = {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = null,
+                        tint = AppColors.gray
+                    )
+                }
+            )
+        })
 }
 
 @Composable
