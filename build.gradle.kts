@@ -1,5 +1,6 @@
 import org.jetbrains.compose.compose
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("multiplatform")
@@ -25,7 +26,7 @@ kotlin {
     sourceSets {
         val jvmMain by getting {
             dependencies {
-                implementation(compose.desktop.windows_x64)
+                implementation(compose.desktop.currentOs)
                 implementation("org.jetbrains.compose.ui:ui-graphics-desktop:1.1.0")
                 implementation("org.jetbrains.compose.ui:ui-geometry-desktop:1.1.0")
                 implementation("org.jetbrains.compose.foundation:foundation-desktop:1.1.0")
@@ -36,13 +37,21 @@ kotlin {
     }
 }
 
+tasks.withType<KotlinCompile>().configureEach {
+    kotlinOptions.freeCompilerArgs += "-opt-in=RequiresOptIn"
+}
+
 compose.desktop {
     application {
         mainClass = "MainKt"
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            targetFormats(TargetFormat.Exe)
             packageName = "pomodoro"
             packageVersion = "1.0.0"
+
+            windows {
+                iconFile.set(File("icon.ico"))
+            }
         }
     }
 }

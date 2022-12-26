@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalComposeUiApi::class)
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,11 +19,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.Key.Companion.Enter
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.isCtrlPressed
-import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
@@ -44,7 +45,6 @@ import shared.domain.Navigation
 import tasks.presentation.TaskListScreen
 import tasks.presentation.TaskListViewModel
 
-@OptIn(ExperimentalComposeUiApi::class)
 fun main() = application {
     val state = remember { MainState() }
     val mainViewModel = state.mainViewModel
@@ -72,7 +72,7 @@ fun main() = application {
                     shiftPressed = event.isShiftPressed,
                     altPressed = event.isAltPressed,
                     ctrlPressed = event.isCtrlPressed,
-                    enterPressed = event.key == Key.Enter && event.type == KeyEventType.KeyDown
+                    enterPressed = event.key == Enter && event.type == KeyEventType.KeyDown
                 )
                 if (combo.anyControlKeyPressed) {
                     mainViewModel.obtainKeyComboKey(combo)
@@ -103,6 +103,8 @@ fun main() = application {
                 )
             }
         }
+    } else {
+        exitApplication()
     }
 }
 
