@@ -2,7 +2,6 @@ package tasks.presentation
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -17,17 +16,17 @@ class TaskListViewModel(
     private val sharedRepository: SharedRepository
 ) {
 
-    private val _input = MutableStateFlow("")
-    val input: StateFlow<String> = _input
+    var input = MutableStateFlow("")
+        private set
 
-    private val _tasks = MutableStateFlow(emptyList<Task>())
-    val tasks: StateFlow<List<Task>> = _tasks
+    var tasks = MutableStateFlow(emptyList<Task>())
+        private set
 
     private var keyCombo: KeyCombo? = null
 
     init {
         sharedRepository.tasks
-            .onEach { _tasks.value = it }
+            .onEach { tasks.value = it }
             .launchIn(scope)
 
         sharedRepository.keyCombo
@@ -59,21 +58,21 @@ class TaskListViewModel(
     fun updateInputField(text: String) {
         when {
             keyCombo?.altPressed == true && text.lastOrNull()?.lowercase() == "d" -> toggleFirstAvailableTask()
-            else -> _input.value = text
+            else -> input.value = text
         }
     }
 
     private fun toggleFirstAvailableTask() {
-        _tasks.value.firstOrNull { it.status == TaskStatus.CREATED }
+        tasks.value.firstOrNull { it.status == TaskStatus.CREATED }
             ?.let(::toggleTaskCompletion)
     }
 
     fun addNewTask() {
         scope.launch {
-            if (_input.value.isNotEmpty()) {
-                val newTask = Task(status = TaskStatus.CREATED, description = _input.value)
+            if (input.value.isNotEmpty()) {
+                val newTask = Task(status = TaskStatus.CREATED, description = input.value)
                 sharedRepository.addTask(newTask)
-                _input.value = ""
+                input.value = ""
             }
         }
     }

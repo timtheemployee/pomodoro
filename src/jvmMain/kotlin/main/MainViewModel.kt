@@ -2,7 +2,6 @@ package main
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -15,19 +14,19 @@ class MainViewModel(
     private val sharedRepository: SharedRepository
 ) {
 
-    private val _notification = MutableStateFlow(false)
-    val notification: StateFlow<Boolean> = _notification
+    var notification = MutableStateFlow(false)
+        private set
 
-    private val _navigation = MutableStateFlow(Navigation.TASK_LIST)
-    val navigation: StateFlow<Navigation> = _navigation
+    var navigation = MutableStateFlow(Navigation.TASK_LIST)
+        private set
 
     init {
         sharedRepository.notification
-            .onEach { _notification.value = it }
+            .onEach { notification.value = it }
             .launchIn(scope)
 
         sharedRepository.navigation
-            .onEach { _navigation.value = it }
+            .onEach { navigation.value = it }
             .launchIn(scope)
 
         scope.launch {

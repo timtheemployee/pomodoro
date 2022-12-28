@@ -4,7 +4,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
@@ -25,23 +24,23 @@ class ControlViewModel(
     private var elapsedTime = 0L
     private var countDownJob: Job? = null
 
-    private val _timer = MutableStateFlow("")
-    val timer: StateFlow<String> = _timer
+    var timer = MutableStateFlow("")
+        private set
 
-    private val _configTimer = MutableStateFlow("")
-    val configTimer: StateFlow<String> = _configTimer
+    var configTimer = MutableStateFlow("")
+        private set
 
-    private val _timerPercent = MutableStateFlow(1f)
-    val timerPercent: StateFlow<Float> = _timerPercent
+    var timerPercent = MutableStateFlow(1f)
+        private set
 
-    private val _stopped = MutableStateFlow(true)
-    val stopped: StateFlow<Boolean> = _stopped
+    var stopped = MutableStateFlow(true)
+        private set
 
-    private val _tasksState = MutableStateFlow(TasksState())
-    val tasksState: StateFlow<TasksState> = _tasksState
+    var tasksState = MutableStateFlow(TasksState())
+        private set
 
-    private val _elapsed = MutableStateFlow("00:00:00")
-    val elapsed: StateFlow<String> = _elapsed
+    var elapsed = MutableStateFlow("00:00:00")
+        private set
 
     init {
         sharedRepository.tasks
@@ -52,13 +51,13 @@ class ControlViewModel(
             .onEach {
                 milliseconds = it
                 roundTime = it
-                _timer.value = formatTimer()
-                _configTimer.value = formatTimeConfig()
+                timer.value = formatTimer()
+                configTimer.value = formatTimeConfig()
             }
             .launchIn(scope)
 
         sharedRepository.elapsed
-            .onEach { _elapsed.value = formatElapsedTime(it) }
+            .onEach { elapsed.value = formatElapsedTime(it) }
             .launchIn(scope)
     }
 
@@ -66,13 +65,13 @@ class ControlViewModel(
         val remaining = tasks.count { it.status == TaskStatus.DONE }
         val count = tasks.count { it.status != TaskStatus.CANCELLED }
 
-        _tasksState.value = TasksState(count, remaining)
+        tasksState.value = TasksState(count, remaining)
     }
 
     fun switchTimerMode() {
-        _stopped.value = !_stopped.value
+        stopped.value = !stopped.value
 
-        if (!_stopped.value) {
+        if (!stopped.value) {
             countDownJob = scope.launch {
                 while (isActive) {
                     tick()
@@ -81,8 +80,8 @@ class ControlViewModel(
         } else {
             elapsedTime += roundTime - milliseconds
             milliseconds = roundTime
-            _timer.value = formatTimer()
-            _timerPercent.value = 1f
+            timer.value = formatTimer()
+            timerPercent.value = 1f
             countDownJob?.cancel()
 
             scope.launch {
@@ -95,8 +94,8 @@ class ControlViewModel(
     private suspend fun tick() {
         delay(ONE_SECOND)
         milliseconds -= ONE_SECOND
-        _timerPercent.value = milliseconds.toFloat() / roundTime
-        _timer.value = formatTimer()
+        timerPercent.value = milliseconds.toFloat() / roundTime
+        timer.value = formatTimer()
 
         if (milliseconds <= 0) {
             switchTimerMode()
